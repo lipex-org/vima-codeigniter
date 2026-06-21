@@ -13,7 +13,7 @@ class VimaMakeRoleTest extends VimaTestCase
         $io = new MockInputOutput();
         CLI::setInputOutput($io);
 
-        command('vima:make-role editor "Editor role"');
+        command('vima:role create editor "Editor role"');
 
         $roleRepo = service('vima_roles');
         $role = $roleRepo->findByName('editor');

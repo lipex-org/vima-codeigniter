@@ -36,7 +36,7 @@ class VimaHelperTest extends VimaTestCase
         $mockUser = new \Vima\CodeIgniter\Tests\Fixtures\User(99);
 
         $config = config('Vima');
-        $config->currentUser = function () use ($mockUser) {
+        $config->user['current'] = function () use ($mockUser) {
             return $mockUser;
         };
 

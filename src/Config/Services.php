@@ -2,7 +2,7 @@
 /**
  * This file is part of Vima PHP.
  *
- * (c) Vima PHP <https://github.com/vimaphp>
+ * (c) Vima PHP <https://github.com/lipex-org/vima-core>
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
@@ -12,6 +12,7 @@
 namespace Vima\CodeIgniter\Config;
 
 use CodeIgniter\Config\BaseService;
+use Vima\CodeIgniter\Repositories\RoleParentRepository;
 use Vima\CodeIgniter\Repositories\RoleRepository;
 use Vima\CodeIgniter\Repositories\PermissionRepository;
 use Vima\CodeIgniter\Repositories\RolePermissionRepository;
@@ -19,44 +20,28 @@ use Vima\CodeIgniter\Repositories\UserRoleRepository;
 use Vima\CodeIgniter\Repositories\UserPermissionRepository;
 use Vima\CodeIgniter\Repositories\UserDenyRepository;
 use Vima\CodeIgniter\Repositories\UserRoleDenyRepository;
-use Vima\Core\Config\VimaConfig;
-use Vima\Core\Contracts\AccessManagerInterface;
-use Vima\Core\Contracts\RoleRepositoryInterface;
-use Vima\Core\Contracts\PermissionRepositoryInterface;
-use Vima\Core\Contracts\RolePermissionRepositoryInterface;
-use Vima\Core\Contracts\UserRoleRepositoryInterface;
-use Vima\Core\Contracts\UserPermissionRepositoryInterface;
-use Vima\Core\Contracts\UserDenyRepositoryInterface;
-use Vima\Core\Contracts\UserRoleDenyRepositoryInterface;
-use Vima\Core\Contracts\RoleParentRepositoryInterface;
-use Vima\Core\Services\AccessManager;
-use Vima\Core\Services\PolicyRegistry;
-use Vima\Core\Services\UserResolver;
-use Vima\Core\DependencyContainer;
-use Vima\Core\Services\AccessResolver;
-use Vima\CodeIgniter\Config\ContextStorage;
-use Vima\Core\Config\Tables;
-use Vima\Core\Config\Columns;
-use Vima\Core\Config\RoleColumns;
-use Vima\Core\Config\PermissionColumns;
-use Vima\Core\Config\UserRoleColumns;
-use Vima\Core\Config\RolePermissionColumns;
-use Vima\Core\Config\UserPermissionColumns;
-use Vima\Core\Config\UserDenyColumns;
-use Vima\Core\Config\UserRoleDenyColumns;
-use Vima\Core\Config\RoleParentColumns;
-use Vima\Core\Config\Setup;
-use Vima\Core\Contracts\EventDispatcherInterface;
-use Vima\CodeIgniter\Support\CodeIgniterEventDispatcher;
-use Vima\Core\Contracts\PolicyRegistryInterface;
-use Vima\Core\Services\SyncService;
-use Vima\Core\Services\MapGenerator;
-use Vima\Core\Services\MappingService;
-use Vima\Core\Contracts\CacheInterface;
 use Vima\CodeIgniter\Services\CacheAdapter;
-use Vima\Core\Services\PermissionManager;
-use Vima\Core\Services\RoleManager;
-use Vima\Core\Services\DeploymentService;
+use Vima\CodeIgniter\Support\VimaRegistrar;
+use Vima\Core\AuthorizationService;
+use Vima\Core\Cache\Contracts\CacheInterface;
+use Vima\Core\Config\Services\SyncService;
+use Vima\Core\Config\VimaConfig;
+use Vima\Core\Events\Contracts\EventDispatcherInterface;
+use Vima\CodeIgniter\Support\CodeIgniterEventDispatcher;
+use Vima\Core\Permission\Contracts\PermissionRepositoryInterface;
+use Vima\Core\Permission\Services\PermissionService;
+use Vima\Core\Policy\Services\PolicyRegistry;
+use Vima\Core\Role\Contracts\RoleParentRepositoryInterface;
+use Vima\Core\Role\Contracts\RolePermissionRepositoryInterface;
+use Vima\Core\Role\Contracts\RoleRepositoryInterface;
+use Vima\Core\Role\Services\RoleService;
+use Vima\Core\Support\Deployment\Services\DeploymentService;
+use Vima\Core\Support\Mapping\MapGenerator;
+use Vima\Core\Support\Mapping\MappingService;
+use Vima\Core\User\Contracts\UserDenyRepositoryInterface;
+use Vima\Core\User\Contracts\UserPermissionRepositoryInterface;
+use Vima\Core\User\Contracts\UserRoleDenyRepositoryInterface;
+use Vima\Core\User\Contracts\UserRoleRepositoryInterface;
 use function Vima\Core\resolve;
 
 if (!class_exists(Services::class, false)) {
@@ -72,29 +57,8 @@ if (!class_exists(Services::class, false)) {
              * @var Vima
              */
             $ciConfig = config('Vima');
-            $setup = $ciConfig->setup ?? new Setup();
 
-            return new VimaConfig(
-                tables: $ciConfig->tables ?? new Tables(),
-                columns: $ciConfig->columns ?? new Columns(
-                    roles: new RoleColumns(),
-                    permissions: new PermissionColumns(),
-                    userRoles: new UserRoleColumns(),
-                    rolePermissions: new RolePermissionColumns(),
-                    userPermissions: new UserPermissionColumns(),
-                    roleParents: new RoleParentColumns(),
-                    userDenies: new UserDenyColumns(),
-                    userRoleDenies: new UserRoleDenyColumns()
-                ),
-                setup: $setup,
-                superAdminRole: $ciConfig->superAdminRole ?? null,
-                superAdminBypass: $ciConfig->superAdminBypass ?? false,
-                userResolver: $ciConfig->userResolver ?? null,
-                cacheEnabled: $ciConfig->cacheEnabled ?? false,
-                cacheTTL: $ciConfig->cacheTTL ?? 3600,
-                cachePrefix: $ciConfig->cachePrefix ?? 'vima_'
-                );
-
+            return $ciConfig->toVimaConfig();
         }
 
         public static function vima_cache(bool $getShared = true): CacheInterface
@@ -109,55 +73,27 @@ if (!class_exists(Services::class, false)) {
         /**
          * Main Vima Access Manager
          */
-        public static function vima(bool $getShared = true): AccessManagerInterface
+        public static function vima(bool $getShared = true): AuthorizationService
         {
             if ($getShared) {
+                VimaRegistrar::init(false);
                 return static::getSharedInstance('vima');
             }
 
-            // reset to ensure new instance
-            DependencyContainer::reset();
-
-            // Initialize Vima Core Container with CI4 implementations
-            $container = DependencyContainer::getInstance();
-
-            $container->register(RoleRepositoryInterface::class, fn() => service('vima_roles'));
-            $container->register(PermissionRepositoryInterface::class, fn() => service('vima_permissions'));
-            $container->register(RolePermissionRepositoryInterface::class, fn() => service('vima_role_permissions'));
-            $container->register(UserRoleRepositoryInterface::class, fn() => service('vima_user_roles'));
-            $container->register(UserPermissionRepositoryInterface::class, fn() => service('vima_user_permissions'));
-            $container->register(RoleParentRepositoryInterface::class, fn() => service('vima_role_parents'));
-            $container->register(UserDenyRepositoryInterface::class, fn() => service('vima_user_denies'));
-            $container->register(UserRoleDenyRepositoryInterface::class, fn() => service('vima_user_role_denies'));
-            $container->register(\Vima\Core\Contracts\AuditRepositoryInterface::class, fn() => new \Vima\CodeIgniter\Repositories\AuditRepository());
-
-            $container->register(VimaConfig::class, fn() => service('vima_config'));
-            $container->register(CacheInterface::class, fn() => service('vima_cache'));
-
-            $container->register(PolicyRegistryInterface::class, PolicyRegistry::instance());
-            $container->register(UserResolver::class, fn() => new UserResolver(service('vima_config')));
-
-            $container->register(EventDispatcherInterface::class, fn() => service('vima_events'));
-
-            // Register Manager services for auto-wiring
-            $container->register(RoleManager::class);
-            $container->register(PermissionManager::class);
-            $container->register(DeploymentService::class);
-
-            $container->register(AccessManagerInterface::class, AccessManager::class);
-
-            // AccessManager itself
-            return resolve(AccessManagerInterface::class);
+            VimaRegistrar::init(false);
+            return resolve(AuthorizationService::class);
         }
+
 
         public static function vima_deployment(bool $getShared = true): DeploymentService
         {
+            VimaRegistrar::init(false);
             if ($getShared) {
                 return static::getSharedInstance('vima_deployment');
             }
 
             return new DeploymentService(
-                resolve(RoleManager::class),
+                resolve(RoleService::class),
                 resolve(PolicyRegistry::class),
                 service('vima_cache')
             );
@@ -232,7 +168,7 @@ if (!class_exists(Services::class, false)) {
             if ($getShared) {
                 return static::getSharedInstance('vima_role_parents');
             }
-            return new \Vima\CodeIgniter\Repositories\RoleParentRepository();
+            return new RoleParentRepository();
         }
 
         /**
@@ -247,34 +183,18 @@ if (!class_exists(Services::class, false)) {
             return new ContextStorage();
         }
 
-        /**
-         * Access Resolver for verifying roles/permissions against Setup
-         */
-        public static function vima_resolver(bool $getShared = true): AccessResolver
-        {
-            if ($getShared) {
-                return static::getSharedInstance('vima_resolver');
-            }
-
-            return new AccessResolver(
-                service('vima_config')->setup,
-                service('vima_roles'),
-                service('vima_permissions')
-            );
-        }
-
         public static function vima_sync(bool $getShared = true): SyncService
         {
+            \Vima\CodeIgniter\Support\VimaRegistrar::init(false);
             if ($getShared) {
                 return static::getSharedInstance('vima_sync');
             }
 
             return new SyncService(
-                resolve(RoleManager::class),
-                resolve(PermissionManager::class),
-                service('vima_role_permissions'),
+                resolve(RoleService::class),
+                resolve(PermissionService::class),
                 service('vima_events'),
-                service('vima_cache')
+                service('vima_config')
             );
         }
 

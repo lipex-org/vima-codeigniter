@@ -34,7 +34,7 @@ Every class-based policy **must** implement `Vima\Core\Contracts\PolicyInterface
 ```php
 namespace App\Policies;
 
-use Vima\Core\Contracts\PolicyInterface;
+use Vima\Core\Policy\Contracts\PolicyInterface;
 use App\Entities\Post;
 
 class PostPolicy implements PolicyInterface

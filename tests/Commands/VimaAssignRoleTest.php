@@ -7,7 +7,7 @@ use Vima\CodeIgniter\Repositories\RoleRepository;
 use Vima\CodeIgniter\Tests\VimaTestCase;
 use CodeIgniter\CLI\CLI;
 use CodeIgniter\Test\Mock\MockInputOutput;
-use Vima\Core\Entities\Bare\BareRole;
+use Vima\Core\Role\Entities\Role;
 
 class VimaAssignRoleTest extends VimaTestCase
 {
@@ -17,16 +17,16 @@ class VimaAssignRoleTest extends VimaTestCase
          * @var RoleRepository
          */
         $roleRepo = service('vima_roles');
-        $roleRepo->save(new BareRole(name: 'admin'));
+        $roleRepo->save(new Role(name: 'admin'));
 
         $io = new MockInputOutput();
         CLI::setInputOutput($io);
 
-        command('vima:assign-role 1 admin');
+        command('vima:role assign 1 admin');
 
         $userRoleRepo = service('vima_user_roles');
         $roles = $userRoleRepo->getRolesForUser(1);
-        $role = $roleRepo->findById($roles[0]->role_id);
+        $role = $roleRepo->findById($roles[0]->roleId);
 
         $this->assertCount(1, $roles);
         $this->assertEquals('admin', $role->name);

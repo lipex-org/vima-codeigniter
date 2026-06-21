@@ -2,7 +2,7 @@
 /**
  * This file is part of Vima PHP.
  *
- * (c) Vima PHP <https://github.com/vimaphp>
+ * (c) Vima PHP <https://github.com/lipex-org/vima-core>
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
@@ -11,9 +11,9 @@
 
 namespace Vima\CodeIgniter\Repositories;
 
-use Vima\Core\Contracts\RoleRepositoryInterface;
-use Vima\Core\Entities\Bare\BareRole;
 use Vima\CodeIgniter\Models\RoleModel;
+use Vima\Core\Role\Contracts\RoleRepositoryInterface;
+use Vima\Core\Role\Entities\Role;
 
 class RoleRepository implements RoleRepositoryInterface
 {
@@ -24,7 +24,7 @@ class RoleRepository implements RoleRepositoryInterface
         $this->model = new RoleModel();
     }
 
-    public function findById(int|string $id): ?BareRole
+    public function findById(int|string $id): ?Role
     {
         $cols = service('vima_config')->columns->roles;
         $data = $this->model->asArray()->find($id);
@@ -32,7 +32,7 @@ class RoleRepository implements RoleRepositoryInterface
             return null;
         }
 
-        return new BareRole(
+        return new Role(
             id: $data[$cols->id],
             name: $data[$cols->name],
             namespace: $data[$cols->namespace] ?? null,
@@ -41,9 +41,14 @@ class RoleRepository implements RoleRepositoryInterface
         );
     }
 
-    public function findByName(string $name, ?string $namespace = null): ?BareRole
+    public function findByName(string $name): ?Role
     {
         $cols = service('vima_config')->columns->roles;
+        $namespace = null;
+        if (str_contains($name, ':')) {
+            [$namespace, $name] = explode(':', $name, 2);
+        }
+
         $query = $this->model->asArray()->where($cols->name, $name);
 
         if ($namespace) {
@@ -60,7 +65,7 @@ class RoleRepository implements RoleRepositoryInterface
             return null;
         }
 
-        return new BareRole(
+        return new Role(
             id: $data[$cols->id],
             name: $data[$cols->name],
             namespace: $data[$cols->namespace] ?? null,
@@ -80,7 +85,7 @@ class RoleRepository implements RoleRepositoryInterface
 
         $all = $query->findAll();
 
-        return array_map(fn($data) => new BareRole(
+        return array_map(fn($data) => new Role(
             id: $data[$cols->id],
             name: $data[$cols->name],
             namespace: $data[$cols->namespace] ?? null,
@@ -89,7 +94,7 @@ class RoleRepository implements RoleRepositoryInterface
         ), $all);
     }
 
-    public function save(BareRole $role): BareRole
+    public function save(Role $role): Role
     {
         $cols = service('vima_config')->columns->roles;
         $data = [
@@ -99,15 +104,17 @@ class RoleRepository implements RoleRepositoryInterface
             $cols->context => empty($role->context) ? null : json_encode($role->context),
         ];
 
-        if ($role->id) {
+        if ($role->id && $this->findById($role->id)) {
             $this->model->update($role->id, $data);
         } else {
             // Check for existing by name/namespace if no ID
-            $existing = $this->findByName($role->name, $role->namespace);
+            $fullName = $role->namespace ? "{$role->namespace}:{$role->name}" : $role->name;
+            $existing = $this->findByName($fullName);
             if ($existing) {
                 $role->id = $existing->id;
                 $this->model->update($role->id, $data);
             } else {
+                $role->id = null; // Clear ID to ensure it is inserted as a new row
                 $id = $this->model->insert($data);
                 $role->id = $id;
             }
@@ -116,7 +123,7 @@ class RoleRepository implements RoleRepositoryInterface
         return $role;
     }
 
-    public function delete(BareRole $role): void
+    public function delete(Role $role): void
     {
         $cols = service('vima_config')->columns->roles;
         if ($role->id) {

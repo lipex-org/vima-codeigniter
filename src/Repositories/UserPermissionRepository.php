@@ -2,7 +2,7 @@
 /**
  * This file is part of Vima PHP.
  *
- * (c) Vima PHP <https://github.com/vimaphp>
+ * (c) Vima PHP <https://github.com/lipex-org/vima-core>
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
@@ -11,17 +11,16 @@
 
 namespace Vima\CodeIgniter\Repositories;
 
-use Vima\Core\Contracts\UserPermissionRepositoryInterface;
-use Vima\Core\Entities\Bare\BareUserPermission;
 use Vima\CodeIgniter\Models\UserPermissionModel;
-use Vima\Core\Contracts\EventDispatcherInterface;
-use Vima\Core\Events\Repository\RepositoryAction;
+use Vima\Core\User\Contracts\UserPermissionRepositoryInterface;
+use Vima\Core\User\Entities\UserPermission;
+
 
 class UserPermissionRepository implements UserPermissionRepositoryInterface
 {
     protected UserPermissionModel $model;
 
-    public function __construct(protected ?EventDispatcherInterface $dispatcher = null)
+    public function __construct()
     {
         $this->model = new UserPermissionModel();
     }
@@ -30,20 +29,20 @@ class UserPermissionRepository implements UserPermissionRepositoryInterface
     {
         $cols = service('vima_config')->columns->userPermissions;
         $data = $this->model->where($cols->userId, $userId)->findAll();
-        return array_map(fn($row) => new BareUserPermission(
+        return array_map(fn($row) => new UserPermission(
             id: $row[$cols->id] ?? null,
-            user_id: $row[$cols->userId],
-            permission_id: $row[$cols->permissionId],
+            userId: $row[$cols->userId],
+            permissionId: $row[$cols->permissionId],
             constraints: isset($row[$cols->constraints]) ? json_decode($row[$cols->constraints], true) : null
         ), $data);
     }
 
-    public function add(BareUserPermission $userPermission): void
+    public function add(UserPermission $userPermission): void
     {
         $cols = service('vima_config')->columns->userPermissions;
         $existing = $this->model->asArray()->where([
-            $cols->userId => $userPermission->user_id,
-            $cols->permissionId => $userPermission->permission_id
+            $cols->userId => $userPermission->userId,
+            $cols->permissionId => $userPermission->permissionId
         ])->first();
 
         if ($existing) {
@@ -54,24 +53,20 @@ class UserPermissionRepository implements UserPermissionRepositoryInterface
         }
 
         $id = $this->model->insert([
-            $cols->userId => $userPermission->user_id,
-            $cols->permissionId => $userPermission->permission_id,
+            $cols->userId => $userPermission->userId,
+            $cols->permissionId => $userPermission->permissionId,
             $cols->constraints => $userPermission->constraints ? json_encode($userPermission->constraints) : null
         ]);
 
         $userPermission->id = $id;
-
-        $this->dispatcher?->dispatch(new RepositoryAction(RepositoryAction::ACTION_CREATED, BareUserPermission::class, $userPermission));
     }
 
-    public function remove(BareUserPermission $userPermission): void
+    public function remove(UserPermission $userPermission): void
     {
         $cols = service('vima_config')->columns->userPermissions;
         $this->model->where([
-            $cols->userId => $userPermission->user_id,
-            $cols->permissionId => $userPermission->permission_id
+            $cols->userId => $userPermission->userId,
+            $cols->permissionId => $userPermission->permissionId
         ])->delete();
-
-        $this->dispatcher?->dispatch(new RepositoryAction(RepositoryAction::ACTION_DELETED, BareUserPermission::class, $userPermission));
     }
 }

@@ -2,7 +2,7 @@
 /**
  * This file is part of Vima PHP.
  *
- * (c) Vima PHP <https://github.com/vimaphp>
+ * (c) Vima PHP <https://github.com/lipex-org/vima-core>
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
@@ -10,10 +10,10 @@
 
 namespace Vima\CodeIgniter\Repositories;
 
-use Vima\Core\Contracts\RoleParentRepositoryInterface;
-use Vima\Core\Entities\Bare\BareRole;
-use Vima\Core\Entities\Bare\BareRoleParent;
 use Vima\CodeIgniter\Models\RoleParentModel;
+use Vima\Core\Role\Contracts\RoleParentRepositoryInterface;
+use Vima\Core\Role\Entities\Role;
+use Vima\Core\Role\Entities\RoleParent;
 
 class RoleParentRepository implements RoleParentRepositoryInterface
 {
@@ -24,12 +24,12 @@ class RoleParentRepository implements RoleParentRepositoryInterface
         $this->model = new RoleParentModel();
     }
 
-    public function assign(BareRoleParent $relationship): void
+    public function assign(RoleParent $relationship): void
     {
         $cols = service('vima_config')->columns->roleParents;
         $data = [
-            $cols->roleId => $relationship->role_id,
-            $cols->parentId => $relationship->parent_id,
+            $cols->roleId => $relationship->roleId,
+            $cols->parentId => $relationship->parentId,
         ];
 
         // Check for existing relationship to avoid duplicates
@@ -40,42 +40,47 @@ class RoleParentRepository implements RoleParentRepositoryInterface
         }
     }
 
-    public function remove(BareRoleParent $relationship): void
+    public function remove(RoleParent $relationship): void
     {
         $cols = service('vima_config')->columns->roleParents;
         $this->model
-            ->where($cols->roleId, $relationship->role_id)
-            ->where($cols->parentId, $relationship->parent_id)
+            ->where($cols->roleId, $relationship->roleId)
+            ->where($cols->parentId, $relationship->parentId)
             ->delete();
     }
 
-    public function clearParents(BareRole $role): void
+    public function clearParents(Role $role): void
     {
         $cols = service('vima_config')->columns->roleParents;
         $this->model->where($cols->roleId, $role->id)->delete();
     }
 
-    public function getParents(BareRole $role): array
+    public function getParents(Role $role): array
     {
         $cols = service('vima_config')->columns->roleParents;
         $relationships = $this->model->where($cols->roleId, $role->id)->findAll();
 
-        return array_map(fn($data) => new BareRoleParent(
+        return array_map(fn($data) => new RoleParent(
             id: $data[$cols->id] ?? null,
-            role_id: $data[$cols->roleId],
-            parent_id: $data[$cols->parentId]
+            roleId: $data[$cols->roleId],
+            parentId: $data[$cols->parentId]
         ), $relationships);
     }
 
-    public function getChildren(BareRole $role): array
+    public function getChildren(Role $role): array
     {
         $cols = service('vima_config')->columns->roleParents;
         $relationships = $this->model->where($cols->parentId, $role->id)->findAll();
 
-        return array_map(fn($data) => new BareRoleParent(
+        return array_map(fn($data) => new RoleParent(
             id: $data[$cols->id] ?? null,
-            role_id: $data[$cols->roleId],
-            parent_id: $data[$cols->parentId]
+            roleId: $data[$cols->roleId],
+            parentId: $data[$cols->parentId]
         ), $relationships);
+    }
+
+    public function deleteAll(): void
+    {
+        $this->model->where('1=1')->delete();
     }
 }

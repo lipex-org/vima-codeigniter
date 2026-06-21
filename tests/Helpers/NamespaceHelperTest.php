@@ -4,8 +4,9 @@ namespace Vima\CodeIgniter\Tests\Helpers;
 
 use Vima\CodeIgniter\Tests\VimaTestCase;
 use Vima\CodeIgniter\Tests\Fixtures\User;
-use Vima\Core\Entities\Permission;
-use Vima\Core\Entities\Role;
+use Vima\Core\Permission\Entities\Permission;
+use Vima\Core\Role\Entities\Role;
+use Vima\Core\Vima;
 
 class NamespaceHelperTest extends VimaTestCase
 {
@@ -16,23 +17,24 @@ class NamespaceHelperTest extends VimaTestCase
         // Setup mock user for 'can' helper
         $mockUser = new User(1);
         $config = config('Vima');
-        $config->currentUser = function () use ($mockUser) {
+        $config->user['current'] = function () use ($mockUser) {
             return $mockUser;
         };
     }
 
     public function testCanResolvesNamespaceFromPermissionString()
     {
-        $user = call_user_func(config('Vima')->currentUser);
-        $manager = vima();
+        $user = config('Vima')->getCurrentUser();
 
         // Define namespaced permission
         $p = Permission::define("edit", namespace: "blog");
-        $manager->ensurePermission($p);
+        $savedPermission = Vima::permissions()->save($p);
 
-        $role = Role::define(name: "editor", permissions: [$p], namespace: "blog");
-        $manager->ensureRole($role);
-        $manager->assignRole($user, $role);
+        $role = Role::define(name: "editor", namespace: "blog");
+        $savedRole = Vima::roles()->save($role);
+
+        Vima::role($savedRole)->permissions()->add($savedPermission);
+        Vima::user($user)->grant()->role($savedRole);
 
         // Test with blog:edit
         $this->assertTrue(can('blog:edit'));
@@ -43,15 +45,16 @@ class NamespaceHelperTest extends VimaTestCase
 
     public function testCanUsesNamespaceAsSecondArgument()
     {
-        $user = call_user_func(config('Vima')->currentUser);
-        $manager = vima();
+        $user = config('Vima')->getCurrentUser();
 
         $p = Permission::define("edit", namespace: "admin");
-        $manager->ensurePermission($p);
+        $savedPermission = Vima::permissions()->save($p);
 
-        $role = Role::define(name: "super", permissions: [$p], namespace: "admin");
-        $manager->ensureRole($role);
-        $manager->assignRole($user, $role);
+        $role = Role::define(name: "super", namespace: "admin");
+        $savedRole = Vima::roles()->save($role);
+
+        Vima::role($savedRole)->permissions()->add($savedPermission);
+        Vima::user($user)->grant()->role($savedRole);
 
         // Test passing namespace explicitly
         $this->assertTrue(can('edit', 'admin'));

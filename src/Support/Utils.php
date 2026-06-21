@@ -6,9 +6,13 @@ use Vima\Core\Entities\User;
 
 final class Utils
 {
-    public static function creatVimaUser(int|string $id): User
+    public static function creatVimaUser(int|string $id): object
     {
-        return User::define($id);
+        return new class($id) {
+            public function __construct(private int|string $id) {}
+            public function getId(): int|string { return $this->id; }
+            public function vimaGetId(): int|string { return $this->id; }
+        };
     }
 
     public static function truncate(mixed $text, int $limit, string $onNull = '[--NONE--]'): string

@@ -29,7 +29,7 @@ class VimaPolicyGeneratorTest extends VimaTestCase
 
     public function testGeneratorCreatesFileWithCorrectContent()
     {
-        command('vima:make-policy BlogPolicy --resource "App\\\\Entities\\\\Blog"');
+        command('vima:policy create BlogPolicy --resource "App\\\\Entities\\\\Blog"');
 
         $this->assertFileExists(APPPATH . 'Policies/BlogPolicy.php');
 
@@ -38,8 +38,8 @@ class VimaPolicyGeneratorTest extends VimaTestCase
         $this->assertStringContainsString('use App\Entities\Blog;', $content);
         $this->assertStringContainsString('return Blog::class;', $content);
         $this->assertStringContainsString('public function canView(AccessContext $ctx, Blog $blog): bool', $content);
-        $this->assertStringContainsString('use Vima\Core\DTOs\AccessContext;', $content);
-        $this->assertStringContainsString('use Vima\Core\Attributes\MapToPermission;', $content);
+        $this->assertStringContainsString('use Vima\Core\Policy\DTOs\AccessContext;', $content);
+        $this->assertStringContainsString('use Vima\Core\Policy\Attributes\MapToPermission;', $content);
         $this->assertStringContainsString('#[MapToPermission(\'edit\')]', $content);
         $this->assertStringContainsString('public function customEditMethod(AccessContext $ctx, Blog $blog): bool', $content);
     }
@@ -48,7 +48,7 @@ class VimaPolicyGeneratorTest extends VimaTestCase
     {
         file_put_contents(APPPATH . 'Policies/BlogPolicy.php', 'Original Content');
 
-        command('vima:make-policy BlogPolicy --resource "App\\\\Entities\\\\Blog" --force');
+        command('vima:policy create BlogPolicy --resource "App\\\\Entities\\\\Blog" --force');
 
         $content = file_get_contents(APPPATH . 'Policies/BlogPolicy.php');
         $this->assertStringNotContainsString('Original Content', $content);

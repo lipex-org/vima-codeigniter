@@ -2,7 +2,7 @@
 /**
  * This file is part of Vima PHP.
  *
- * (c) Vima PHP <https://github.com/vimaphp>
+ * (c) Vima PHP <https://github.com/lipex-org/vima-core>
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
@@ -10,14 +10,14 @@
 
 
 use Config\Services;
-use Vima\Core\Contracts\AccessManagerInterface;
-use Vima\Core\Services\AccessResolver;
+use Vima\CodeIgniter\Config\Vima;
+use Vima\Core\AuthorizationService;
 
 if (!function_exists('vima')) {
     /**
      * Returns the Vima Access Manager service.
      */
-    function vima(): AccessManagerInterface
+    function vima(): AuthorizationService
     {
         return Services::vima();
     }
@@ -34,10 +34,13 @@ if (!function_exists('can')) {
     function can(string $permission, ...$arguments): bool
     {
         $user = null;
+        /**
+         * @var Vima
+         */
         $config = config('Vima');
 
-        if ($config && isset($config->currentUser) && is_callable($config->currentUser)) {
-            $user = call_user_func($config->currentUser);
+        if ($config) {
+            $user = $config->getCurrentUser();
         } else {
             try {
                 if (function_exists('auth')) {
@@ -51,18 +54,17 @@ if (!function_exists('can')) {
         }
 
         if (!$user) {
-            throw new \Exception("Vima could not resolve the current user. Please ensure a user is logged in or define 'currentUser' in your Vima configuration.");
+            throw new \Exception("Vima could not resolve the current user. Please ensure a user is logged in or define 'currentUser' in your Vima configuration. This exception might also be triggered when you use 'can' helper function when not logged in");
         }
-
-        $namespace = null;
 
         if (str_contains($permission, ':')) {
-            [$namespace, $permission] = explode(":", $permission, 2);
+            // Already contains namespace
         } elseif (!empty($arguments) && is_string($arguments[0])) {
             $namespace = array_shift($arguments);
+            $permission = "{$namespace}:{$permission}";
         }
 
-        return vima()->can($user, $permission, $namespace, ...$arguments);
+        return vima()->can($user, $permission, ...$arguments);
     }
 }
 
@@ -125,18 +127,7 @@ if (!function_exists('vima_policy')) {
      */
     function vima_policy(string $action, callable $callback): void
     {
-        vima()->govern($action, $callback);
-    }
-}
-
-if (!function_exists('vima_resolve')) {
-    /**
-     * Resolve a role or permission against the Setup configuration.
-     * 
-     * @return AccessResolver
-     */
-    function vima_resolve(): AccessResolver
-    {
-        return Services::vima_resolver();
+        $registry = \Vima\Core\resolve(\Vima\Core\Policy\Contracts\PolicyRegistryInterface::class);
+        $registry->register($action, $callback);
     }
 }

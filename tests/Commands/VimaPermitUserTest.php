@@ -7,7 +7,7 @@ use Vima\CodeIgniter\Repositories\UserPermissionRepository;
 use Vima\CodeIgniter\Tests\VimaTestCase;
 use CodeIgniter\CLI\CLI;
 use CodeIgniter\Test\Mock\MockInputOutput;
-use Vima\Core\Entities\Bare\BarePermission;
+use Vima\Core\Permission\Entities\Permission;
 
 class VimaPermitUserTest extends VimaTestCase
 {
@@ -17,19 +17,19 @@ class VimaPermitUserTest extends VimaTestCase
          * @var PermissionRepository $permRepo
          */
         $permRepo = service('vima_permissions');
-        $permRepo->save(new BarePermission(name: 'extra.perm'));
+        $permRepo->save(new Permission(name: 'extra.perm'));
 
         $io = new MockInputOutput();
         CLI::setInputOutput($io);
 
-        command('vima:permit-user 1 extra.perm');
+        command('vima:user permit 1 extra.perm');
 
         /**
          * @var UserPermissionRepository 
          */
         $userPermRepo = service('vima_user_permissions');
         $userPerms = $userPermRepo->findByUserId(1);
-        $perm = $permRepo->findById($userPerms[0]->permission_id);
+        $perm = $permRepo->findById($userPerms[0]->permissionId);
 
         $this->assertCount(1, $userPerms);
         $this->assertEquals('extra.perm', $perm->name);

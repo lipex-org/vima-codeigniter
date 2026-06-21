@@ -15,11 +15,18 @@ abstract class VimaTestCase extends CIUnitTestCase
 
     protected function setUp(): void
     {
+        \CodeIgniter\Config\Factories::reset();
         parent::setUp();
+        \Vima\CodeIgniter\Support\VimaRegistrar::init(true);
 
-        // Clear cache
+        // Clear cache and context
         if (function_exists('vima')) {
-            vima()->clearCache();
+            \Vima\Core\resolve(\Vima\Core\Cache\Contracts\CacheInterface::class)->clear();
+        }
+        if (class_exists(\Config\Services::class)) {
+            try {
+                \Config\Services::vima_context()->set(null);
+            } catch (\Throwable $e) {}
         }
     }
 

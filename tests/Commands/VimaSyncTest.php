@@ -10,8 +10,8 @@ use Config\Services;
 use Vima\CodeIgniter\Commands\VimaSync;
 use Vima\CodeIgniter\Tests\Fixtures\Setup;
 use Vima\CodeIgniter\Tests\VimaTestCase;
-use Vima\Core\Config\VimaConfig;
-use Vima\Core\Entities\Bare\BareRole;
+use Vima\Core\Role\Entities\Role;
+use Vima\Core\Vima;
 
 final class VimaSyncTest extends VimaTestCase
 {
@@ -20,7 +20,7 @@ final class VimaSyncTest extends VimaTestCase
         parent::setUp();
         $setup = new Setup();
 
-        $config = new VimaConfig();
+        $config = service('vima_config');
 
         $config->setup->roles = $setup->get()['roles'];
         $config->setup->permissions = $setup->get()['permissions'];
@@ -40,21 +40,23 @@ final class VimaSyncTest extends VimaTestCase
     {
         $this->assertTrue(true);
 
-        $roles = vima()->getRoles(resolve: true);
+        $roles = Vima::roles()->all();
 
         $this->assertCount(1, $roles);
         $this->assertEquals('admin', $roles[0]->name);
         $this->assertEquals('can access everything', $roles[0]->description);
-        $this->assertCount(1, $roles[0]->permissions);
-        $this->assertEquals('test.view', $roles[0]->permissions[0]->name);
-        $this->assertEquals('This is a permssion', $roles[0]->permissions[0]->description);
+
+        $rolePerms = Vima::role($roles[0])->permissions()->all();
+        $this->assertCount(1, $rolePerms);
+        $this->assertEquals('test.view', $rolePerms[0]->name);
+        $this->assertEquals('This is a permssion', $rolePerms[0]->description);
     }
 
     public function test_sync_service_with_refresh(): void
     {
         // Add a dummy role to ensure it gets wiped out by refresh
         $roleRepo = service('vima_roles');
-        $roleRepo->save(new BareRole(name: 'dummy_role'));
+        $roleRepo->save(new Role(name: 'dummy_role'));
 
         $io = new MockInputOutput();
         CLI::setInputOutput($io);
@@ -64,7 +66,7 @@ final class VimaSyncTest extends VimaTestCase
 
         CLI::resetInputOutput();
 
-        $roles = vima()->getRoles();
+        $roles = Vima::roles()->all();
 
         // Ensure the dummy role is gone, leaving only the 'admin' from config
         $this->assertCount(1, $roles);

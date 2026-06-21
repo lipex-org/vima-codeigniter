@@ -2,8 +2,8 @@
 
 namespace Vima\CodeIgniter\Repositories;
 
-use Vima\Core\Contracts\AuditRepositoryInterface;
-use Vima\Core\Entities\Bare\BareAuditLog;
+use Vima\Core\Audit\Contracts\AuditRepositoryInterface;
+use Vima\Core\Audit\Entities\BareAuditLog;
 use CodeIgniter\Database\BaseConnection;
 
 class AuditRepository implements AuditRepositoryInterface
@@ -22,7 +22,7 @@ class AuditRepository implements AuditRepositoryInterface
         if ($data instanceof BareAuditLog) {
             $cols = service('vima_config')->columns->auditLogs;
             $data = [
-                $cols->userId => $data->user_id,
+                $cols->userId => $data->userId,
                 $cols->permission => $data->permission,
                 $cols->namespace => $data->namespace,
                 $cols->result => $data->result,

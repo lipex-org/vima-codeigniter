@@ -3,9 +3,8 @@
 namespace Vima\CodeIgniter\Support;
 
 use CodeIgniter\Config\Services;
-use Vima\Core\Contracts\PolicyInterface;
-use Vima\Core\Contracts\PolicyRegistryInterface;
-use Vima\Core\Services\PolicyRegistry;
+use Vima\Core\Policy\Contracts\PolicyInterface;
+use Vima\Core\Policy\Contracts\PolicyRegistryInterface;
 use function Vima\Core\resolve;
 
 /**
@@ -23,22 +22,51 @@ class Discovery
      */
     public static function discoverPolicies(string $directory = 'Policies'): void
     {
-        $locator = Services::locator();
-        $files = $locator->listFiles($directory);
-        
+        $config = config('Vima');
+        $cacheActive = $config && $config->isCacheEnabled();
+        $cache = null;
+        $discovered = null;
+
+        if ($cacheActive) {
+            try {
+                $cache = service('vima_cache');
+                $discovered = $cache->get('vima:policies:discovered');
+            } catch (\Throwable $e) {
+                $cacheActive = false;
+            }
+        }
+
         /** @var PolicyRegistryInterface $registry */
         $registry = resolve(PolicyRegistryInterface::class);
 
+        if (is_array($discovered)) {
+            foreach ($discovered as $className) {
+                if (class_exists($className) && is_subclass_of($className, PolicyInterface::class)) {
+                    $registry->registerClass($className::getResource(), $className);
+                }
+            }
+            return;
+        }
+
+        $locator = Services::locator();
+        $files = $locator->listFiles($directory);
+        $discovered = [];
+
         foreach ($files as $file) {
             $className = $locator->getClassname($file);
-            
+
             if (!$className || !class_exists($className) || (new \ReflectionClass($className))->isAbstract()) {
                 continue;
             }
 
             if (is_subclass_of($className, PolicyInterface::class)) {
                 $registry->registerClass($className::getResource(), $className);
+                $discovered[] = $className;
             }
+        }
+
+        if ($cacheActive && $cache !== null) {
+            $cache->set('vima:policies:discovered', $discovered, $config->cache['ttl'] ?? 3600);
         }
     }
 }

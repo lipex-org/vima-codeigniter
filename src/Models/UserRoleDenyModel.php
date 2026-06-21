@@ -2,7 +2,7 @@
 /**
  * This file is part of Vima PHP.
  *
- * (c) Vima PHP <https://github.com/vimaphp>
+ * (c) Vima PHP <https://github.com/lipex-org/vima-core>
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
@@ -21,7 +21,7 @@ use CodeIgniter\Model;
  */
 class UserRoleDenyModel extends Model
 {
-    protected $table = 'user_role_denies';
+    protected $table = '';
     protected $primaryKey = 'id';
     protected $returnType = 'array';
     protected $useAutoIncrement = true;
@@ -30,10 +30,10 @@ class UserRoleDenyModel extends Model
     public function __construct()
     {
         parent::__construct();
-        
+
         $config = config('Vima');
         $this->table = $config->tables->userRoleDenies ?? 'user_role_denies';
-        
+
         $cols = $config->columns->userRoleDenies;
         $this->allowedFields = [
             $cols->userId,

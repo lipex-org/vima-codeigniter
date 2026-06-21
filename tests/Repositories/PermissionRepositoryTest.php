@@ -3,7 +3,7 @@
 namespace Vima\CodeIgniter\Tests\Repositories;
 
 use Vima\CodeIgniter\Repositories\PermissionRepository;
-use Vima\Core\Entities\Bare\BarePermission;
+use Vima\Core\Permission\Entities\Permission;
 use Vima\CodeIgniter\Tests\VimaTestCase;
 
 class PermissionRepositoryTest extends VimaTestCase
@@ -18,7 +18,7 @@ class PermissionRepositoryTest extends VimaTestCase
 
     public function testSaveAndFindPermission()
     {
-        $permission = new BarePermission(name: 'users.create', description: 'Can create users');
+        $permission = new Permission(name: 'users.create', description: 'Can create users');
         $savedPermission = $this->repository->save($permission);
 
         $this->assertNotNull($savedPermission->id);
@@ -31,7 +31,7 @@ class PermissionRepositoryTest extends VimaTestCase
 
     public function testFindByName()
     {
-        $permission = new BarePermission(name: 'users.edit');
+        $permission = new Permission(name: 'users.edit');
         $this->repository->save($permission);
 
         $foundPermission = $this->repository->findByName('users.edit');
@@ -41,7 +41,7 @@ class PermissionRepositoryTest extends VimaTestCase
 
     public function testDeletePermission()
     {
-        $permission = new BarePermission(name: 'temporary');
+        $permission = new Permission(name: 'temporary');
         $this->repository->save($permission);
 
         $this->repository->delete($permission);
@@ -50,10 +50,10 @@ class PermissionRepositoryTest extends VimaTestCase
 
     public function testSaveDuplicateNameUpdatesExisting()
     {
-        $p1 = new BarePermission(name: 'posts.create', namespace: 'blog', description: 'Old desc');
+        $p1 = new Permission(name: 'posts.create', namespace: 'blog', description: 'Old desc');
         $this->repository->save($p1);
 
-        $p2 = new BarePermission(name: 'posts.create', namespace: 'blog', description: 'New desc');
+        $p2 = new Permission(name: 'posts.create', namespace: 'blog', description: 'New desc');
         $saved = $this->repository->save($p2);
 
         $this->assertEquals($p1->id, $saved->id);

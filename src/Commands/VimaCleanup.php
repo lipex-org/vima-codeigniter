@@ -2,7 +2,7 @@
 /**
  * This file is part of Vima PHP.
  *
- * (c) Vima PHP <https://github.com/vimaphp>
+ * (c) Vima PHP <https://github.com/lipex-org/vima-core>
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
@@ -61,25 +61,25 @@ class VimaCleanup extends BaseCommand
         $userDenyModel = new UserDenyModel();
         $userDenyModel->setTable($config->tables->userDenies);
         $cols = $config->columns->userDenies;
-        
+
         $userDenyModel->where($cols->expiresAt . ' <', $now)
-                                          ->where($cols->expiresAt . ' IS NOT NULL', null, false)
-                                          ->delete();
+            ->where($cols->expiresAt . ' IS NOT NULL', null, false)
+            ->delete();
         $countUserDenies = $userDenyModel->db->affectedRows();
-        
+
         // 2. User Role Denies
         $userRoleDenyModel = new UserRoleDenyModel();
         $userRoleDenyModel->setTable($config->tables->userRoleDenies);
         $colsRole = $config->columns->userRoleDenies;
-        
+
         $userRoleDenyModel->where($colsRole->expiresAt . ' <', $now)
-                                               ->where($colsRole->expiresAt . ' IS NOT NULL', null, false)
-                                               ->delete();
+            ->where($colsRole->expiresAt . ' IS NOT NULL', null, false)
+            ->delete();
         $countRoleDenies = $userRoleDenyModel->db->affectedRows();
 
         CLI::write("Removed " . $countUserDenies . " expired user denials.", 'green');
         CLI::write("Removed " . $countRoleDenies . " expired user role denials.", 'green');
-        
+
         CLI::write('Vima cleanup completed!', 'green');
     }
 }

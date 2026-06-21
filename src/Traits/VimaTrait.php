@@ -2,7 +2,7 @@
 /**
  * This file is part of Vima PHP.
  *
- * (c) Vima PHP <https://github.com/vimaphp>
+ * (c) Vima PHP <https://github.com/lipex-org/vima-core>
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
@@ -10,7 +10,9 @@
 
 namespace Vima\CodeIgniter\Traits;
 
+use Vima\CodeIgniter\Config\Vima;
 use Vima\Core\Exceptions\AccessDeniedException;
+use Vima\Core\Vima as VimaCore;
 
 /**
  * Trait VimaTrait
@@ -82,7 +84,7 @@ trait VimaTrait
      */
     protected function can_any(array $permissions, ...$arguments): bool
     {
-        return service('vima')->canAny($this->currentVimaUser(), $permissions, ...$arguments);
+        return can_any($permissions, ...$arguments);
     }
 
     /**
@@ -93,7 +95,7 @@ trait VimaTrait
      */
     protected function can_all(array $permissions, ...$arguments): bool
     {
-        return service('vima')->canAll($this->currentVimaUser(), $permissions, ...$arguments);
+        return can_all($permissions, ...$arguments);
     }
 
     /**
@@ -104,10 +106,13 @@ trait VimaTrait
      */
     protected function currentVimaUser(): ?object
     {
+        /**
+         * @var Vima $config
+         */
         $config = config('Vima');
 
-        if ($config && isset($config->currentUser) && is_callable($config->currentUser)) {
-            return call_user_func($config->currentUser);
+        if ($config && isset($config->user['current'])) {
+            return $config->getCurrentUser();
         }
 
         try {
@@ -131,7 +136,7 @@ trait VimaTrait
     protected function denyUser(string $permission, ?string $reason = null): void
     {
         $user = $this->currentVimaUser() ?? throw new \RuntimeException('No authenticated user found for denyUser().');
-        service('vima')->deny($user, $permission, $reason);
+        VimaCore::user($user)->deny()->permission($permission, $reason);
     }
 
     /**
@@ -146,7 +151,7 @@ trait VimaTrait
         if (!$user) {
             return false;
         }
-        return service('vima')->isDenied($user, $permission);
+        return VimaCore::user($user)->is()->denied()->permission($permission);
     }
 
     /**
@@ -160,7 +165,7 @@ trait VimaTrait
     protected function denyRole(string $role, ?string $reason = null, ?\DateTimeInterface $expiresAt = null): void
     {
         $user = $this->currentVimaUser() ?? throw new \RuntimeException('No authenticated user found for denyRole().');
-        service('vima')->denyRole($user, $role, $reason, $expiresAt);
+        VimaCore::user($user)->deny()->role($role, $reason, $expiresAt);
     }
 
     /**
@@ -172,7 +177,7 @@ trait VimaTrait
     protected function undenyRole(string $role): void
     {
         $user = $this->currentVimaUser() ?? throw new \RuntimeException('No authenticated user found for undenyRole().');
-        service('vima')->undenyRole($user, $role);
+        VimaCore::user($user)->undeny()->role($role);
     }
 
     /**
@@ -187,6 +192,6 @@ trait VimaTrait
         if (!$user) {
             return false;
         }
-        return service('vima')->isRoleDenied($user, $role);
+        return VimaCore::user($user)->is()->denied()->role($role);
     }
 }

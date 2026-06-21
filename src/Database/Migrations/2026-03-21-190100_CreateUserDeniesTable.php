@@ -3,7 +3,7 @@
 namespace Vima\CodeIgniter\Database\Migrations;
 
 use CodeIgniter\Database\Migration;
-use Vima\Core\Support\FrameworkIntegration;
+use Vima\Core\Support\Framework\FrameworkIntegration;
 
 class CreateUserDeniesTable extends Migration
 {

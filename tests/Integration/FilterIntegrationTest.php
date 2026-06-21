@@ -4,7 +4,7 @@ namespace Vima\CodeIgniter\Tests\Integration;
 
 use Vima\CodeIgniter\Tests\VimaTestCase;
 use CodeIgniter\Test\FeatureTestTrait;
-use Vima\Core\Contracts\PolicyInterface;
+use Vima\Core\Policy\Contracts\PolicyInterface;
 use CodeIgniter\Config\Factories;
 
 class IntegrationResource
@@ -54,13 +54,14 @@ class FilterIntegrationTest extends VimaTestCase
 
         // Mock Vima Config
         $config = config('Vima');
-        $config->policies = [IntegrationPolicy::class];
-        $config->currentUser = fn() => new \Vima\CodeIgniter\Tests\Fixtures\User(1);
+        $config->policies['registered'] = [IntegrationPolicy::class];
+        $config->user['current'] = fn() => new \Vima\CodeIgniter\Tests\Fixtures\User(1);
 
         // Inject mock model
         Factories::injectMock('models', 'IntegrationModel', new IntegrationModel());
+        Factories::injectMock('config', 'Vima', $config);
 
-        \Vima\CodeIgniter\Filters\VimaSetupFilter::reset();
+        \Vima\CodeIgniter\Support\VimaRegistrar::init(true);
     }
 
     public function testFullFilterLifecycle()
@@ -69,7 +70,7 @@ class FilterIntegrationTest extends VimaTestCase
         $routes = service('routes');
         $routes->get('test-lifecycle', function () {
             return 'OK';
-        }, ['filter' => ['vima_setup', 'vima_resource:IntegrationModel', 'vima_authorize:edit']]);
+        }, ['filter' => ['vima_resource:IntegrationModel', 'vima_authorize:edit']]);
 
         $result = $this->get('test-lifecycle');
 
@@ -80,14 +81,17 @@ class FilterIntegrationTest extends VimaTestCase
     public function testFilterLifecycleFailsWhenUnauthorized()
     {
         $config = config('Vima');
-        $config->policies = [FailingPolicy::class];
+        $config->policies['registered'] = [FailingPolicy::class];
+        \CodeIgniter\Config\Factories::injectMock('config', 'Vima', $config);
+        \Vima\CodeIgniter\Support\VimaRegistrar::init(true);
 
         $routes = service('routes');
         $routes->get('test-failing', function () {
             return 'OK';
-        }, ['filter' => ['vima_setup', 'vima_resource:IntegrationModel', 'vima_authorize:edit']]);
+        }, ['filter' => ['vima_resource:IntegrationModel', 'vima_authorize:edit']]);
 
-        $this->expectException(\Vima\Core\Exceptions\AccessDeniedException::class);
-        $this->get('test-failing');
+        $result = $this->get('test-failing');
+        $result->assertStatus(403);
+        $result->assertSee('Access Denied');
     }
 }

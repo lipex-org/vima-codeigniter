@@ -2,17 +2,20 @@
 
 namespace Vima\CodeIgniter\Tests\Traits;
 
+use CodeIgniter\Config\Factories;
 use Vima\CodeIgniter\Repositories\PermissionRepository;
 use Vima\CodeIgniter\Repositories\RoleRepository;
 use Vima\CodeIgniter\Repositories\UserRoleRepository;
 use Vima\CodeIgniter\Tests\VimaTestCase;
 use Vima\CodeIgniter\Traits\VimaTrait;
 use Vima\CodeIgniter\Tests\Fixtures\User;
-use Vima\Core\Entities\Bare\BarePermission;
-use Vima\Core\Entities\Bare\BareRole;
-use Vima\Core\Entities\Bare\BareRolePermission;
-use Vima\Core\Entities\Bare\BareUserRole;
+use Vima\Core\Cache\Contracts\CacheInterface;
+use Vima\Core\Permission\Entities\Permission;
+use Vima\Core\Role\Entities\Role;
+use Vima\Core\Role\Entities\RolePermission;
+use Vima\Core\User\Entities\UserRole;
 use Vima\Core\Exceptions\AccessDeniedException;
+use function Vima\Core\resolve;
 
 class VimaTraitTest extends VimaTestCase
 {
@@ -22,7 +25,7 @@ class VimaTraitTest extends VimaTestCase
     {
         parent::setUp();
         helper('vima');
-        vima()->clearCache();
+        resolve(CacheInterface::class)->clear();
 
         $this->controller = new class {
             use VimaTrait;
@@ -72,10 +75,12 @@ class VimaTraitTest extends VimaTestCase
         // Setup mock user
         $mockUser = new User(1);
         $config = config('Vima');
-        $config->cacheEnabled = false; // Disable cache for this test
-        $config->currentUser = function () use ($mockUser) {
+        $config->cache['enabled'] = false; // Disable cache for this test
+        $config->user['current'] = function () use ($mockUser) {
             return $mockUser;
         };
+
+        Factories::injectMock('config', 'Vima', $config);
 
         // Populate database with permissions and roles
         /**
@@ -92,21 +97,21 @@ class VimaTraitTest extends VimaTestCase
         $userRoleRepo = service('vima_user_roles');
         $rolePermRepo = service('vima_role_permissions');
 
-        $editPerm = $permRepo->save(new BarePermission(name: 'edit.post'));
-        $viewPerm = $permRepo->save(new BarePermission(name: 'view.post'));
+        $editPerm = $permRepo->save(new Permission(name: 'edit.post'));
+        $viewPerm = $permRepo->save(new Permission(name: 'view.post'));
 
-        $role = $roleRepo->save(new BareRole(name: 'editor'));
+        $role = $roleRepo->save(new Role(name: 'editor'));
 
-        $rolePermRepo->assign(new BareRolePermission(
-            role_id: $role->id,
-            permission_id: $editPerm->id
+        $rolePermRepo->assign(new RolePermission(
+            roleId: $role->id,
+            permissionId: $editPerm->id
         ));
-        $rolePermRepo->assign(new BareRolePermission(
-            role_id: $role->id,
-            permission_id: $viewPerm->id
+        $rolePermRepo->assign(new RolePermission(
+            roleId: $role->id,
+            permissionId: $viewPerm->id
         ));
 
-        $userRoleRepo->assign(new BareUserRole(user_id: 1, role_id: $role->id));
+        $userRoleRepo->assign(new UserRole(userId: 1, roleId: $role->id));
     }
 
     public function testCan()

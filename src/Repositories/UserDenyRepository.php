@@ -2,7 +2,7 @@
 /**
  * This file is part of Vima PHP.
  *
- * (c) Vima PHP <https://github.com/vimaphp>
+ * (c) Vima PHP <https://github.com/lipex-org/vima-core>
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
@@ -13,11 +13,12 @@ declare(strict_types=1);
 namespace Vima\CodeIgniter\Repositories;
 
 use CodeIgniter\Model;
-use Vima\CodeIgniter\Models\UserDenyModel;
-use Vima\Core\Config\Columns;
-use Vima\Core\Contracts\UserDenyRepositoryInterface;
-use Vima\Core\Entities\Bare\BareUserDeny;
 use DateTimeInterface;
+use Vima\CodeIgniter\Models\UserDenyModel;
+use Vima\Core\Config\Schema\Columns;
+use Vima\Core\User\Contracts\UserDenyRepositoryInterface;
+use Vima\Core\User\Entities\UserDeny;
+
 
 /**
  * Class UserDenyRepository
@@ -38,7 +39,7 @@ class UserDenyRepository implements UserDenyRepositoryInterface
     public function add(string|int $user_id, string|int $permission_id, ?string $reason = null, ?DateTimeInterface $expiresAt = null): void
     {
         $cols = $this->columns->userDenies;
-        
+
         $exists = $this->model->where([
             $cols->userId => $user_id,
             $cols->permissionId => $permission_id,
@@ -62,7 +63,7 @@ class UserDenyRepository implements UserDenyRepositoryInterface
     public function remove(string|int $user_id, string|int $permission_id): void
     {
         $cols = $this->columns->userDenies;
-        
+
         $this->model->where([
             $cols->userId => $user_id,
             $cols->permissionId => $permission_id,
@@ -72,7 +73,7 @@ class UserDenyRepository implements UserDenyRepositoryInterface
     public function isDenied(string|int $user_id, string|int $permission_id): bool
     {
         $cols = $this->columns->userDenies;
-        
+
         $deny = $this->model->where([
             $cols->userId => $user_id,
             $cols->permissionId => $permission_id,
@@ -103,13 +104,13 @@ class UserDenyRepository implements UserDenyRepositoryInterface
 
         $denies = [];
         foreach ($results as $row) {
-            $denies[] = new BareUserDeny(
+            $denies[] = new UserDeny(
                 id: (int) $row->id,
-                user_id: $row->{$cols->userId},
-                permission_id: $row->{$cols->permissionId},
+                userId: $row->{$cols->userId},
+                permissionId: $row->{$cols->permissionId},
                 reason: $row->{$cols->reason} ?? null,
-                expires_at: $row->{$cols->expiresAt} ?? null,
-                created_at: $row->{$cols->createdAt} ?? null
+                expiresAt: $row->{$cols->expiresAt} ?? null,
+                createdAt: $row->{$cols->createdAt} ?? null
             );
         }
 

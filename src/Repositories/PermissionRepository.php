@@ -2,7 +2,7 @@
 /**
  * This file is part of Vima PHP.
  *
- * (c) Vima PHP <https://github.com/vimaphp>
+ * (c) Vima PHP <https://github.com/lipex-org/vima-core>
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
@@ -11,9 +11,9 @@
 namespace Vima\CodeIgniter\Repositories;
 
 use Vima\Core\Config\VimaConfig;
-use Vima\Core\Contracts\PermissionRepositoryInterface;
-use Vima\Core\Entities\Bare\BarePermission;
 use Vima\CodeIgniter\Models\PermissionModel;
+use Vima\Core\Permission\Contracts\PermissionRepositoryInterface;
+use Vima\Core\Permission\Entities\Permission;
 
 class PermissionRepository implements PermissionRepositoryInterface
 {
@@ -26,7 +26,7 @@ class PermissionRepository implements PermissionRepositoryInterface
         $this->config = service('vima_config');
     }
 
-    public function findById(int|string $id): ?BarePermission
+    public function findById(int|string $id): ?Permission
     {
         $cols = $this->config->columns->permissions;
         $data = $this->model->asArray()->find($id);
@@ -34,7 +34,7 @@ class PermissionRepository implements PermissionRepositoryInterface
             return null;
         }
 
-        return new BarePermission(
+        return new Permission(
             id: $data[$cols->id],
             name: $data[$cols->name],
             namespace: $data[$cols->namespace] ?? null,
@@ -42,9 +42,14 @@ class PermissionRepository implements PermissionRepositoryInterface
         );
     }
 
-    public function findByName(string $name, ?string $namespace = null): ?BarePermission
+    public function findByName(string $name): ?Permission
     {
         $cols = $this->config->columns->permissions;
+        $namespace = null;
+        if (str_contains($name, ':')) {
+            [$namespace, $name] = explode(':', $name, 2);
+        }
+
         $query = $this->model->asArray()->where($cols->name, $name);
 
         if ($namespace) {
@@ -61,7 +66,7 @@ class PermissionRepository implements PermissionRepositoryInterface
             return null;
         }
 
-        return new BarePermission(
+        return new Permission(
             id: $data[$cols->id],
             name: $data[$cols->name],
             namespace: $data[$cols->namespace] ?? null,
@@ -83,7 +88,7 @@ class PermissionRepository implements PermissionRepositoryInterface
         }
 
         $all = $query->findAll();
-        return array_map(fn($data) => new BarePermission(
+        return array_map(fn($data) => new Permission(
             id: $data[$cols->id],
             name: $data[$cols->name],
             namespace: $data[$cols->namespace] ?? null,
@@ -91,7 +96,7 @@ class PermissionRepository implements PermissionRepositoryInterface
         ), $all);
     }
 
-    public function save(BarePermission $permission): BarePermission
+    public function save(Permission $permission): Permission
     {
         $cols = $this->config->columns->permissions;
         $data = [
@@ -100,16 +105,21 @@ class PermissionRepository implements PermissionRepositoryInterface
             $cols->description => $permission->description,
         ];
 
-        if ($permission->id) {
+        if ($permission->id && $this->findById($permission->id)) {
             $this->model->update($permission->id, $data);
         } else {
             // Check for existing by name/namespace if no ID
-            $existing = $this->findByName($permission->name, $permission->namespace);
+            $fullName = $permission->namespace ? "{$permission->namespace}:{$permission->name}" : $permission->name;
+            $existing = $this->findByName($fullName);
             if ($existing) {
                 $permission->id = $existing->id;
                 $this->model->update($permission->id, $data);
             } else {
+                $permission->id = null; // Clear ID to ensure it is inserted as a new row
                 $id = $this->model->insert($data);
+                if ($id === false) {
+                    throw new \RuntimeException("Failed to insert permission: " . json_encode($this->model->errors()) . " DB error: " . json_encode($this->model->db->error()));
+                }
                 $permission->id = $id;
             }
         }
@@ -117,7 +127,7 @@ class PermissionRepository implements PermissionRepositoryInterface
         return $permission;
     }
 
-    public function delete(BarePermission $permission): void
+    public function delete(Permission $permission): void
     {
         $cols = $this->config->columns->permissions;
         if ($permission->id) {

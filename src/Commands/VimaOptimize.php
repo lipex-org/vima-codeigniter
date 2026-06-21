@@ -2,7 +2,7 @@
 /**
  * This file is part of Vima PHP.
  *
- * (c) Vima PHP <https://github.com/vimaphp>
+ * (c) Vima PHP <https://github.com/lipex-org/vima-core>
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
@@ -56,11 +56,11 @@ class VimaOptimize extends BaseCommand
 
         try {
             $stats = service('vima_deployment')->optimize();
-            
+
             CLI::write('Optimization complete!', 'green');
             CLI::write("  - Cached {$stats['roles']} roles.");
             CLI::write("  - Cached {$stats['policies']} policy maps.");
-            
+
         } catch (\Throwable $e) {
             CLI::error('Optimization failed: ' . $e->getMessage());
         }

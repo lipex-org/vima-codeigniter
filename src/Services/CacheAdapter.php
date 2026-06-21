@@ -2,7 +2,7 @@
 /**
  * This file is part of Vima PHP.
  *
- * (c) Vima PHP <https://github.com/vimaphp>
+ * (c) Vima PHP <https://github.com/lipex-org/vima-core>
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
@@ -13,7 +13,7 @@ declare(strict_types=1);
 namespace Vima\CodeIgniter\Services;
 
 use CodeIgniter\Cache\CacheInterface as CICacheInterface;
-use Vima\Core\Contracts\CacheInterface;
+use Vima\Core\Cache\Contracts\CacheInterface;
 
 /**
  * Class CacheAdapter
@@ -32,12 +32,23 @@ class CacheAdapter implements CacheInterface
     ) {
     }
 
-    /**
-     * @inheritDoc
-     */
     public function get(string $key, mixed $default = null): mixed
     {
         $value = $this->cache->get($this->sanitizeKey($key));
+        
+        if (ENVIRONMENT !== 'testing') {
+            try {
+                $session = session();
+                if ($value !== null) {
+                    $session->set('simulated_cache_hits', ($session->get('simulated_cache_hits') ?? 0) + 1);
+                } else {
+                    $session->set('simulated_cache_misses', ($session->get('simulated_cache_misses') ?? 0) + 1);
+                }
+            } catch (\Throwable $e) {
+                // Ignore session failures in CLI / bootstrap phases
+            }
+        }
+
         return $value === null ? $default : $value;
     }
 
@@ -46,6 +57,14 @@ class CacheAdapter implements CacheInterface
      */
     public function set(string $key, mixed $value, ?int $ttl = null): bool
     {
+        if (ENVIRONMENT !== 'testing') {
+            try {
+                $session = session();
+                $session->set('simulated_cache_writes', ($session->get('simulated_cache_writes') ?? 0) + 1);
+            } catch (\Throwable $e) {
+                // Ignore
+            }
+        }
         return $this->cache->save($this->sanitizeKey($key), $value, $ttl ?? 3600);
     }
 

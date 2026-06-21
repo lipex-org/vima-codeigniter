@@ -3,7 +3,7 @@
 /**
  * This file is part of Vima PHP.
  *
- * (c) Vima PHP <https://github.com/vimaphp>
+ * (c) Vima PHP <https://github.com/lipex-org/vima-core>
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
@@ -17,8 +17,10 @@ use CodeIgniter\Filters\FilterInterface;
 use CodeIgniter\HTTP\RequestInterface;
 use CodeIgniter\HTTP\ResponseInterface;
 use Vima\CodeIgniter\Config\Vima;
+use Config\Services;
 use Vima\Core\Exceptions\AccessDeniedException;
-use Vima\Core\Services\UserResolver;
+use Vima\Core\User\Services\UserResolutionService;
+use function Vima\Core\resolve;
 
 /**
  * Filter to enforce Vima policies.
@@ -47,15 +49,25 @@ class VimaAuthorizeFilter implements FilterInterface
 
         // Use the can() helper which handles user resolution and vima_context
         $resource = vima_context();
-        $user = $config->currentUser ? ($config->currentUser)() : null;
-        $userResolver = new UserResolver();
-
         if (!can($permission, $resource)) {
             if ($page) {
                 return redirect()->to($page);
             }
 
-            throw AccessDeniedException::forPermission($permission, $user, $userResolver);
+            // Check if request expects JSON
+            if (stripos($request->getHeaderLine('Accept'), 'application/json') !== false || $request->isAJAX()) {
+                return Services::response()
+                    ->setStatusCode(403)
+                    ->setJSON([
+                        'error' => 'Access denied',
+                        'message' => "Access denied on permission '{$permission}'"
+                    ]);
+            }
+
+            $viewPath = $config->view403 ?? 'Vima\CodeIgniter\Views\error_403';
+            return Services::response()
+                ->setStatusCode(403)
+                ->setBody(view($viewPath));
         }
     }
 

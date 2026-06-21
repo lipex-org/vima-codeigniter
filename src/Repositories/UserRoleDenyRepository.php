@@ -2,7 +2,7 @@
 /**
  * This file is part of Vima PHP.
  *
- * (c) Vima PHP <https://github.com/vimaphp>
+ * (c) Vima PHP <https://github.com/lipex-org/vima-core>
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
@@ -14,10 +14,10 @@ namespace Vima\CodeIgniter\Repositories;
 
 use CodeIgniter\Model;
 use Vima\CodeIgniter\Models\UserRoleDenyModel;
-use Vima\Core\Config\Columns;
-use Vima\Core\Contracts\UserRoleDenyRepositoryInterface;
-use Vima\Core\Entities\Bare\BareUserRoleDeny;
 use DateTimeInterface;
+use Vima\Core\Config\Schema\Columns;
+use Vima\Core\User\Contracts\UserRoleDenyRepositoryInterface;
+use Vima\Core\User\Entities\UserRoleDeny;
 
 /**
  * Class UserRoleDenyRepository
@@ -38,7 +38,7 @@ class UserRoleDenyRepository implements UserRoleDenyRepositoryInterface
     public function add(string|int $user_id, string|int $role_id, ?string $reason = null, ?DateTimeInterface $expiresAt = null): void
     {
         $cols = $this->columns->userRoleDenies;
-        
+
         $exists = $this->model->where([
             $cols->userId => $user_id,
             $cols->roleId => $role_id,
@@ -62,7 +62,7 @@ class UserRoleDenyRepository implements UserRoleDenyRepositoryInterface
     public function remove(string|int $user_id, string|int $role_id): void
     {
         $cols = $this->columns->userRoleDenies;
-        
+
         $this->model->where([
             $cols->userId => $user_id,
             $cols->roleId => $role_id,
@@ -72,7 +72,7 @@ class UserRoleDenyRepository implements UserRoleDenyRepositoryInterface
     public function isDenied(string|int $user_id, string|int $role_id): bool
     {
         $cols = $this->columns->userRoleDenies;
-        
+
         $deny = $this->model->where([
             $cols->userId => $user_id,
             $cols->roleId => $role_id,
@@ -103,13 +103,13 @@ class UserRoleDenyRepository implements UserRoleDenyRepositoryInterface
 
         $denies = [];
         foreach ($results as $row) {
-            $denies[] = new BareUserRoleDeny(
+            $denies[] = new UserRoleDeny(
                 id: (int) $row->id,
-                user_id: $row->{$cols->userId},
-                role_id: $row->{$cols->roleId},
+                userId: $row->{$cols->userId},
+                roleId: $row->{$cols->roleId},
                 reason: $row->{$cols->reason} ?? null,
-                expires_at: $row->{$cols->expiresAt} ?? null,
-                created_at: $row->{$cols->createdAt} ?? null
+                expiresAt: $row->{$cols->expiresAt} ?? null,
+                createdAt: $row->{$cols->createdAt} ?? null
             );
         }
 

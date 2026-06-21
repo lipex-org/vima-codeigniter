@@ -2,7 +2,7 @@
 /**
  * This file is part of Vima PHP.
  *
- * (c) Vima PHP <https://github.com/vimaphp>
+ * (c) Vima PHP <https://github.com/lipex-org/vima-core>
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
@@ -46,7 +46,7 @@ class VimaSync extends BaseCommand
             $config = service('vima_config');
 
             CLI::write('Syncing definitions...', 'yellow');
-            $response = $syncService->sync($config);
+            $response = $syncService->sync();
 
             CLI::write('Sync complete.', 'green');
 
@@ -61,7 +61,7 @@ class VimaSync extends BaseCommand
 
             // Also trigger map generation if everything went well
             CLI::write('Triggering map generation...', 'yellow');
-            $this->call('vima:generate-maps');
+            $this->call('vima:maps', ['generate']);
 
         } catch (\Throwable $e) {
             CLI::error('Sync failed: ' . $e->getMessage());

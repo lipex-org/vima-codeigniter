@@ -1,8 +1,9 @@
 <?php
+
 /**
  * This file is part of Vima PHP.
  *
- * (c) Vima PHP <https://github.com/vimaphp>
+ * (c) Vima PHP <https://github.com/lipex-org/vima-core>
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
@@ -10,124 +11,100 @@
 
 namespace Vima\CodeIgniter\Config;
 
-use Closure;
 use CodeIgniter\Config\BaseConfig;
-use RuntimeException;
-use Vima\Core\Config\Setup;
-use Vima\Core\Config\Tables;
-use Vima\Core\Config\Columns;
-use Vima\Core\Config\RoleColumns;
-use Vima\Core\Config\PermissionColumns;
-use Vima\Core\Config\RolePermissionColumns;
-use Vima\Core\Config\UserRoleColumns;
-use Vima\Core\Config\UserPermissionColumns;
 use Vima\CodeIgniter\Libraries\Setup as SetupLibrary;
-use Vima\Core\Config\RoleParentColumns;
-use Vima\Core\Contracts\PolicyInterface;
-use Vima\Core\Contracts\PolicyRegistryInterface;
-use Vima\Core\Contracts\SetupProviderInterface;
-use Vima\Core\Entities\SuperAdmin;
-use Vima\Core\Services\PolicyRegistry;
-use function Vima\Core\resolve;
+use Vima\Core\Config\DTOs\PolicyConfig;
+use Vima\Core\Config\DTOs\Setup;
+use Vima\Core\Config\DTOs\UserMethods;
+use Vima\Core\Config\Schema\Columns;
+use Vima\Core\Config\Schema\PermissionColumns;
+use Vima\Core\Config\Schema\RoleColumns;
+use Vima\Core\Config\Schema\RoleParentColumns;
+use Vima\Core\Config\Schema\RolePermissionColumns;
+use Vima\Core\Config\Schema\Tables;
+use Vima\Core\Config\Schema\UserPermissionColumns;
+use Vima\Core\Config\Schema\UserRoleColumns;
+use Vima\Core\Config\VimaConfig;
 
 class Vima extends BaseConfig
 {
-    /**
-     * Table names.
-     * @var Tables
-     */
     public Tables $tables;
-
-    /**
-     * Column names mapping.
-     * @var Columns
-     */
     public Columns $columns;
-
-    /**
-     * Declarative setup for roles and permissions.
-     * @var Setup
-     */
     public Setup $setup;
 
     /**
      * List of setup providers.
-     * @var class-string<SetupProviderInterface>[]
+     * @var class-string[]
      */
-    public array $providers = [
+    public array $setupProviders = [
         SetupLibrary::class,
     ];
 
     /**
-     * List of policy classes that implement PolicyInterface.
-     * @var string[]
+     * Policy auto-discovery and registration settings.
      */
-    public array $policies = [];
+    public array $policies = [
+        'autoDiscover' => true,
+        'directory' => 'Policies',
+        'registered' => [],
+    ];
 
     /**
-     * Whether to automatically discover policy classes in the application.
-     * @var bool
+     * User context resolution and methods settings.
      */
-    public bool $autoDiscoverPolicies = true;
+    public array $user = [
+        'current' => null,
+        'resolver' => null,
+        'methods' => [],
+        'segment' => null,
+    ];
 
     /**
-     * The directory to scan for policies when auto-discovery is enabled.
+     * Super Admin bypass and role specifications.
+     */
+    public array $superAdmin = [
+        'role' => null,
+        'bypass' => false,
+    ];
+
+    /**
+     * Cache and optimization settings for authorization results.
+     */
+    public array $cache = [
+        'enabled' => false,
+        'ttl' => 3600,
+        'prefix' => 'vima_',
+    ];
+
+    /**
+     * Audit log configurations.
+     */
+    public array $audit = [
+        'enabled' => false,
+        'level' => 'all',
+    ];
+
+    /**
+     * Quickly checks if audit logging features are active.
+     */
+    public function isAuditEnabled(): bool
+    {
+        return (bool) ($this->audit['enabled'] ?? false);
+    }
+
+    /**
+     * Retrieve the audit log level.
+     */
+    public function getAuditLevel(): string
+    {
+        return $this->audit['level'] ?? 'all';
+    }
+
+    /**
+     * The view file to render on 403 Forbidden/Access Denied errors.
      * @var string
      */
-    public string $policyDirectory = 'Policies';
-
-    /**
-     * Callback or Closure to resolve the current user object.
-     * signature: fn() => object|null
-     * @var Closure|null
-     */
-    public ?Closure $currentUser = null;
-
-    /**
-     * Callback or Closure to resolved the user's ID/Primary Key from a user object/array.
-     * signature: fn($user) => string|int
-     * @var Closure|null
-     */
-    public ?Closure $userResolver = null;
-
-    /**
-     * Optional ID Resolver for hashed route segments. Used with the Vima::resource() filter
-     * signature: fn($id) => mixed
-     * @var Closure|null
-     */
-    public ?Closure $routeSegmentResolver = null;
-
-    /**
-     * Role name or SuperAdmin object representing the super admin role. Super admins can bypass all permission checks if $superAdminBypass is true.
-     * @var SuperAdmin|string|null
-     */
-    public SuperAdmin|string|null $superAdminRole = null;
-
-    /**
-     * Whether to bypass auth checks for superadmins automatically
-     * @var bool
-     */
-    public bool $superAdminBypass = false;
-
-    /**
-     * Whether to enable authorization results caching.
-     */
-    public bool $cacheEnabled = false;
-
-    /**
-     * Whether to enable audit logging of authorization checks.
-     */
-    public bool $auditEnabled = false;
-
-    /**
-     * Cache Time-To-Live in seconds.
-     */
-    public int $cacheTTL = 3600;
-
-    /**
-     * Prefix for cache keys.
-     */
-    public string $cachePrefix = 'vima_';
+    public string $view403 = 'Vima\CodeIgniter\Views\error_403';
 
     public function __construct()
     {
@@ -143,54 +120,98 @@ class Vima extends BaseConfig
             roleParents: new RoleParentColumns()
         );
 
-        $this->setup = $this->resolveSetup();
-        $this->registerPolicies();
+        $this->setup = new Setup($this->setupProviders);
     }
 
-    protected function resolveSetup(): Setup
+    // --------------------------------------------------------------------
+    // Convenience Helpers
+    // --------------------------------------------------------------------
+
+    /**
+     * Resolves the current user using the configured closure.
+     */
+    public function getCurrentUser(): mixed
     {
-        $roles = [];
-        $permissions = [];
-
-        foreach ($this->providers as $provider) {
-            $data = new $provider()->get();
-
-            if (isset($data['roles'])) {
-                $roles = array_merge($roles, $data['roles']);
-            }
-
-            if (isset($data['permissions'])) {
-                $permissions = array_merge($permissions, $data['permissions']);
-            }
+        if (property_exists($this, 'currentUser') && isset($this->currentUser) && is_callable($this->currentUser)) {
+            return ($this->currentUser)();
         }
 
-        return new Setup($roles, $permissions);
+        if (isset($this->user['current']) && is_callable($this->user['current'])) {
+            return ($this->user['current'])();
+        }
+
+        return null;
     }
-    private function registerPolicies()
+
+    /**
+     * Resolves a user's primary ID/Key using the configured resolver closure.
+     */
+    public function getUserKey(mixed $user): mixed
     {
-        /**
-         * @var PolicyRegistry
-         */
-        $policyRegistry = resolve(PolicyRegistryInterface::class);
-
-        // 1. Manual registration
-        foreach ($this->policies as $p) {
-            if (!class_exists($p)) {
-                throw new RuntimeException("[Vima] Class $p does not exist");
-            }
-
-            $instance = new $p();
-
-            if (!($instance instanceof PolicyInterface)) {
-                throw new RuntimeException("[Vima] Policy class $p is invalid. Policies must implement PolicyInterface::class");
-            }
-
-            $policyRegistry->registerClass($instance::getResource(), $p);
+        if (property_exists($this, 'userResolver') && isset($this->userResolver) && is_callable($this->userResolver)) {
+            return ($this->userResolver)($user);
         }
 
-        // 2. Auto-discovery
-        if ($this->autoDiscoverPolicies) {
-            \Vima\CodeIgniter\Support\Discovery::discoverPolicies($this->policyDirectory);
+        if (isset($this->user['resolver']) && is_callable($this->user['resolver'])) {
+            return ($this->user['resolver'])($user);
         }
+
+        if (is_object($user) && isset($this->user['methods']['id'])) {
+            $method = $this->user['methods']['id'];
+            return method_exists($user, $method) ? $user->$method() : ($user->id ?? null);
+        }
+
+        if (is_object($user) && property_exists($this, 'userMethods') && isset($this->userMethods['id'])) {
+            $method = $this->userMethods['id'];
+            return method_exists($user, $method) ? $user->$method() : ($user->id ?? null);
+        }
+
+        return is_array($user) ? ($user['id'] ?? null) : ($user->id ?? null);
+    }
+
+    /**
+     * Quickly checks if cache features are active.
+     */
+    public function isCacheEnabled(): bool
+    {
+        return (bool) ($this->cache['enabled'] ?? false);
+    }
+
+    /**
+     * Determine if a role is a configured Super Admin, and if bypass is active.
+     */
+    public function shouldBypassForSuperAdmin(string $roleName): bool
+    {
+        if (!($this->superAdmin['bypass'] ?? false)) {
+            return false;
+        }
+
+        $target = $this->superAdmin['role'];
+        return is_string($target) ? ($target === $roleName) : false;
+    }
+
+    /**
+     * Maps the CI4 array-structured configuration back to the strict Core DTO.
+     */
+    public function toVimaConfig(): VimaConfig
+    {
+        return new VimaConfig(
+            tables: $this->tables,
+            columns: $this->columns,
+            setup: $this->setup,
+            userMethods: new UserMethods(
+                id: $this->user['methods']['id'] ?? null
+            ),
+            policy: new PolicyConfig(
+                registered: $this->policies['registered']
+            ),
+            superAdminRole: $this->superAdmin['role'] ?? null,
+            superAdminBypass: $this->superAdmin['bypass'] ?? false,
+            userResolver: $this->user['resolver'] ?? null,
+            cacheEnabled: $this->isCacheEnabled(),
+            cacheTTL: $this->cache['ttl'] ?? 3600,
+            cachePrefix: $this->cache['prefix'] ?? 'vima_',
+            auditLevel: $this->getAuditLevel()
+        );
     }
 }

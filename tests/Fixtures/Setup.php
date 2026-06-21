@@ -2,9 +2,9 @@
 
 namespace Vima\CodeIgniter\Tests\Fixtures;
 
-use Vima\Core\Contracts\SetupProviderInterface;
-use Vima\Core\Entities\Permission;
-use Vima\Core\Entities\Role;
+use Vima\Core\Config\Contracts\SetupProviderInterface;
+use Vima\Core\Permission\Entities\Permission;
+use Vima\Core\Role\Entities\Role;
 
 final class Setup implements SetupProviderInterface
 {
@@ -12,10 +12,10 @@ final class Setup implements SetupProviderInterface
     {
         return [
             'roles' => [
-                Role::define('admin', ['*'], 'can access everything')
+                Role::define('admin', description: 'can access everything')->withPermissions(['*'])
             ],
             'permissions' => [
-                Permission::define('test.view', 'This is a permssion')
+                Permission::define('test.view', description: 'This is a permssion')
             ]
         ];
     }

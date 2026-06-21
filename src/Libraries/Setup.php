@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Vima\CodeIgniter\Libraries;
 
-use Vima\Core\Contracts\SetupProviderInterface;
-use Vima\Core\Entities\Permission;
-use Vima\Core\Entities\Role;
+use Vima\Core\Config\Contracts\SetupProviderInterface;
+use Vima\Core\Permission\Entities\Permission;
+use Vima\Core\Role\Entities\Role;
 
 final class Setup implements SetupProviderInterface
 {

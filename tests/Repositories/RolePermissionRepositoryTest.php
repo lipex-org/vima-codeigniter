@@ -5,9 +5,9 @@ namespace Vima\CodeIgniter\Tests\Repositories;
 use Vima\CodeIgniter\Repositories\RolePermissionRepository;
 use Vima\CodeIgniter\Repositories\RoleRepository;
 use Vima\CodeIgniter\Repositories\PermissionRepository;
-use Vima\Core\Entities\Bare\BareRole;
-use Vima\Core\Entities\Bare\BarePermission;
-use Vima\Core\Entities\Bare\BareRolePermission;
+use Vima\Core\Role\Entities\Role;
+use Vima\Core\Permission\Entities\Permission;
+use Vima\Core\Role\Entities\RolePermission;
 use Vima\CodeIgniter\Tests\VimaTestCase;
 
 class RolePermissionRepositoryTest extends VimaTestCase
@@ -26,12 +26,12 @@ class RolePermissionRepositoryTest extends VimaTestCase
 
     public function testAssignAndGetRolePermissions()
     {
-        $role = $this->roleRepository->save(new BareRole(name: 'editor'));
-        $perm1 = $this->permissionRepository->save(new BarePermission(name: 'posts.create'));
-        $perm2 = $this->permissionRepository->save(new BarePermission(name: 'posts.edit'));
+        $role = $this->roleRepository->save(new Role(name: 'editor'));
+        $perm1 = $this->permissionRepository->save(new Permission(name: 'posts.create'));
+        $perm2 = $this->permissionRepository->save(new Permission(name: 'posts.edit'));
 
-        $this->repository->assign(new BareRolePermission(role_id: $role->id, permission_id: $perm1->id));
-        $this->repository->assign(new BareRolePermission(role_id: $role->id, permission_id: $perm2->id));
+        $this->repository->assign(new RolePermission(roleId: $role->id, permissionId: $perm1->id));
+        $this->repository->assign(new RolePermission(roleId: $role->id, permissionId: $perm2->id));
 
         $rolePermissions = $this->repository->getRolePermissions($role);
         $this->assertCount(2, $rolePermissions);
@@ -39,9 +39,9 @@ class RolePermissionRepositoryTest extends VimaTestCase
 
     public function testRevokePermission()
     {
-        $role = $this->roleRepository->save(new BareRole(name: 'editor'));
-        $perm = $this->permissionRepository->save(new BarePermission(name: 'posts.create'));
-        $rolePerm = new BareRolePermission(role_id: $role->id, permission_id: $perm->id);
+        $role = $this->roleRepository->save(new Role(name: 'editor'));
+        $perm = $this->permissionRepository->save(new Permission(name: 'posts.create'));
+        $rolePerm = new RolePermission(roleId: $role->id, permissionId: $perm->id);
 
         $this->repository->assign($rolePerm);
         $this->assertCount(1, $this->repository->getRolePermissions($role));
@@ -52,12 +52,12 @@ class RolePermissionRepositoryTest extends VimaTestCase
 
     public function testGetPermissionRoles()
     {
-        $role1 = $this->roleRepository->save(new BareRole(name: 'admin'));
-        $role2 = $this->roleRepository->save(new BareRole(name: 'editor'));
-        $perm = $this->permissionRepository->save(new BarePermission(name: 'shared.perm'));
+        $role1 = $this->roleRepository->save(new Role(name: 'admin'));
+        $role2 = $this->roleRepository->save(new Role(name: 'editor'));
+        $perm = $this->permissionRepository->save(new Permission(name: 'shared.perm'));
 
-        $this->repository->assign(new BareRolePermission(role_id: $role1->id, permission_id: $perm->id));
-        $this->repository->assign(new BareRolePermission(role_id: $role2->id, permission_id: $perm->id));
+        $this->repository->assign(new RolePermission(roleId: $role1->id, permissionId: $perm->id));
+        $this->repository->assign(new RolePermission(roleId: $role2->id, permissionId: $perm->id));
 
         $permissionRoles = $this->repository->getPermissionRoles($perm);
         $this->assertCount(2, $permissionRoles);

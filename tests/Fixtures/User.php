@@ -2,8 +2,8 @@
 
 namespace Vima\CodeIgniter\Tests\Fixtures;
 
-use Vima\Core\Contracts\UserInterface;
-use Vima\Core\Entities\Role;
+use Vima\Core\User\Contracts\UserInterface;
+use Vima\Core\Role\Entities\Role;
 
 class User implements UserInterface
 {

@@ -14,14 +14,15 @@ class VimaAuthorizeFilterTest extends VimaTestCase
     protected function setUp(): void
     {
         parent::setUp();
-        
+
         $config = config('Vima');
-        $config->currentUser = fn() => new \Vima\CodeIgniter\Tests\Fixtures\User(1);
+        $config->user['current'] = fn() => new \Vima\CodeIgniter\Tests\Fixtures\User(1);
+        \Vima\CodeIgniter\Support\VimaRegistrar::init(true);
     }
 
     public function testAuthorizeFilterAllowsWhenPermitted()
     {
-        vima_policy('test.perm', function($user) {
+        vima_policy('test.perm', function ($user) {
             return true;
         });
 
@@ -37,7 +38,7 @@ class VimaAuthorizeFilterTest extends VimaTestCase
 
     public function testAuthorizeFilterThrowsExceptionWhenDenied()
     {
-        vima_policy('test.deny', function($user) {
+        vima_policy('test.deny', function ($user) {
             return false;
         });
 
@@ -46,13 +47,14 @@ class VimaAuthorizeFilterTest extends VimaTestCase
             return 'OK';
         }, ['filter' => 'vima_authorize:test.deny']);
 
-        $this->expectException(AccessDeniedException::class);
-        $this->get('test-auth-fail');
+        $result = $this->get('test-auth-fail');
+        $result->assertStatus(403);
+        $result->assertSee('Access Denied');
     }
 
     public function testAuthorizeFilterRedirectsWhenPageProvided()
     {
-        vima_policy('test.deny', function($user) {
+        vima_policy('test.deny', function ($user) {
             return false;
         });
 
@@ -60,7 +62,8 @@ class VimaAuthorizeFilterTest extends VimaTestCase
         $routes->get('test-auth-redirect', function () {
             return 'OK';
         }, ['filter' => 'vima_authorize:test.deny,login']);
-        $routes->get('login', function() { return 'Login Page'; });
+        $routes->get('login', function () {
+            return 'Login Page'; });
 
         $result = $this->get('test-auth-redirect');
         $result->assertRedirectTo('login');
