@@ -77,4 +77,13 @@ class ListAction extends BaseAction
     {
         return 'vima role list [options]';
     }
+
+    public function getOptions(): array
+    {
+        return [
+            '--limit'   => 'Limit description/context/permission characters length (default: 30).',
+            '--resolve' => 'Resolve and display related permissions and parents.',
+            '-R'        => 'Alias for --resolve.',
+        ];
+    }
 }

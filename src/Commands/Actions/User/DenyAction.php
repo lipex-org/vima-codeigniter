@@ -84,4 +84,12 @@ class DenyAction extends BaseAction
     {
         return 'vima user deny [user_id] [permission_or_role] [reason] [options]';
     }
+
+    public function getOptions(): array
+    {
+        return [
+            '--role' => 'Deny a role instead of a permission.',
+            '--for'  => 'Duration for the denial (e.g., "1 day", "2 hours").',
+        ];
+    }
 }

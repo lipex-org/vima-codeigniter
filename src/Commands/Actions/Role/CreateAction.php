@@ -88,4 +88,18 @@ class CreateAction extends BaseAction
     {
         return 'vima role create [name] [options]';
     }
+
+    public function getOptions(): array
+    {
+        return [
+            '--namespace'   => 'Namespace for the role.',
+            '--description' => 'Optional description of the role.',
+            '-N'            => 'Alias for --namespace.',
+            '-D'            => 'Alias for --description.',
+            '--parents'     => 'Comma-separated list of parent roles.',
+            '--children'    => 'Comma-separated list of child roles.',
+            '--permissions' => 'Comma-separated list of permissions to assign.',
+            '--context'     => 'JSON-encoded context string.',
+        ];
+    }
 }

@@ -92,4 +92,12 @@ class RolesAction extends BaseAction
     {
         return 'vima user roles [user_id]';
     }
+
+    public function getOptions(): array
+    {
+        return [
+            '--resolve' => 'Resolve and display related permissions, parents, and children.',
+            '--limit'   => 'Limit column characters length (default: 30).',
+        ];
+    }
 }

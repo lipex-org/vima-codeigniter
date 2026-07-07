@@ -76,4 +76,14 @@ abstract class BaseAction implements VimaActionInterface
 
         return $default;
     }
+
+    /**
+     * Returns the options for the action.
+     * 
+     * @return array
+     */
+    public function getOptions(): array
+    {
+        return [];
+    }
 }

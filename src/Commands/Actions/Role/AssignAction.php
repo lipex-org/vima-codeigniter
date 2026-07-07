@@ -52,4 +52,11 @@ class AssignAction extends BaseAction
     {
         return 'vima role assign [user_id] [role_name] [options]';
     }
+
+    public function getOptions(): array
+    {
+        return [
+            '--namespace' => 'Optional namespace for the role.',
+        ];
+    }
 }

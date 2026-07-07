@@ -60,4 +60,11 @@ class UndenyAction extends BaseAction
     {
         return 'vima user undeny [user_id] [permission_or_role] [options]';
     }
+
+    public function getOptions(): array
+    {
+        return [
+            '--role' => 'Remove a denial for a role instead of a permission.',
+        ];
+    }
 }

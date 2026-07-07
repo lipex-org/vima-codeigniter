@@ -38,4 +38,11 @@ interface VimaActionInterface
      * @return string
      */
     public function getUsage(): string;
+
+    /**
+     * Returns the options for the action.
+     * 
+     * @return array
+     */
+    public function getOptions(): array;
 }

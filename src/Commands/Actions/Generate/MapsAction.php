@@ -79,4 +79,12 @@ class MapsAction extends BaseAction
     {
         return 'vima generate maps [options]';
     }
+
+    public function getOptions(): array
+    {
+        return [
+            '--ts'     => 'Generate TypeScript map files as well.',
+            '--ts-dir' => 'Custom output directory for TypeScript files.',
+        ];
+    }
 }

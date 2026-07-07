@@ -22,7 +22,7 @@ class AIAction extends BaseAction
         'vscode' => '.github/rules/vima.md',
         'cline' => '.cline/rules/vima.md',
         'roocode' => '.roo/rules/vima.md',
-        'antigravity' => '.agent/skills/vima/SKILL.md',
+        'antigravity' => 'agents/skills/vima/SKILL.md',
         'jetbrains' => '.jetbrains/rules/vima.md',
     ];
 
@@ -124,5 +124,13 @@ class AIAction extends BaseAction
     public function getUsage(): string
     {
         return 'vima publish ai {options}';
+    }
+
+    public function getOptions(): array
+    {
+        return [
+            '--ide' => 'Target IDE/Agent (cursor, windsurf, vscode, cline, roocode, antigravity, jetbrains, all).',
+            '--overwrite' => 'Force overwrite existing file without prompting.',
+        ];
     }
 }

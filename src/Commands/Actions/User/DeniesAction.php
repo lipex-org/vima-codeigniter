@@ -67,4 +67,11 @@ class DeniesAction extends BaseAction
     {
         return 'vima user denies [user_id]';
     }
+
+    public function getOptions(): array
+    {
+        return [
+            '--limit' => 'Limit description and reason characters length (default: 30).',
+        ];
+    }
 }

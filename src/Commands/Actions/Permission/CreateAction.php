@@ -50,4 +50,14 @@ class CreateAction extends BaseAction
     {
         return 'vima permission create [name] [options]';
     }
+
+    public function getOptions(): array
+    {
+        return [
+            '--namespace'   => 'Namespace for the permission.',
+            '--description' => 'Optional description of the permission.',
+            '-N'            => 'Alias for --namespace.',
+            '-D'            => 'Alias for --description.',
+        ];
+    }
 }

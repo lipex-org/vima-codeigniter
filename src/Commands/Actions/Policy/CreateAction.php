@@ -99,4 +99,12 @@ class CreateAction extends BaseAction
     {
         return 'vima:policy create [name] [options]';
     }
+
+    public function getOptions(): array
+    {
+        return [
+            '--resource' => 'The target Resource class/entity name for the policy.',
+            '--force'    => 'Force overwrite the file if it already exists.',
+        ];
+    }
 }

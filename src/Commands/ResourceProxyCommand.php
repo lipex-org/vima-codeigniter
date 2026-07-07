@@ -12,6 +12,7 @@ namespace Vima\CodeIgniter\Commands;
 
 use CodeIgniter\CLI\BaseCommand;
 use CodeIgniter\CLI\CLI;
+use Vima\CodeIgniter\Commands\Actions\BaseAction;
 
 /**
  * Class ResourceProxyCommand
@@ -62,6 +63,7 @@ abstract class ResourceProxyCommand extends BaseCommand
         try {
             /** @var \Vima\CodeIgniter\Commands\Actions\VimaActionInterface $instance */
             $instance = new $class();
+
             $instance->execute($params);
         } catch (\Throwable $e) {
             CLI::error("Action execution failed: " . $e->getMessage());
@@ -76,10 +78,38 @@ abstract class ResourceProxyCommand extends BaseCommand
      */
     public function showHelp()
     {
+        $params = CLI::getSegments();
+        $action = $params[1] ?? null;
+
+        if ($action && $action !== 'help') {
+            /**
+             * @var BaseAction
+             */
+            $class = $this->actions[$action] ?? null;
+            $instance = $class ? new $class() : null;
+
+            if ($instance) {
+                $this->showActionHelp($action, $instance);
+                return;
+            } else {
+                CLI::error("Unknown action '{$action}' for resource '{$this->resource}'");
+                CLI::write("");
+
+                $this->showAvailableActions();
+                return;
+            }
+        }
+
         CLI::write("Vima Management - " . ucfirst($this->resource), 'yellow');
         CLI::write("Usage:", 'yellow');
         CLI::write("  php spark vima:{$this->resource} [action] [arguments]");
         CLI::write("");
+
+        $this->showAvailableActions();
+    }
+
+    protected function showAvailableActions(): void
+    {
         CLI::write("Available Actions:", 'yellow');
 
         foreach ($this->actions as $action => $class) {
@@ -87,6 +117,33 @@ abstract class ResourceProxyCommand extends BaseCommand
             $instance = new $class();
             CLI::write(sprintf("  %-15s %s", CLI::color($action, 'green'), $instance->getDescription()));
             CLI::write(sprintf("  %-15s Usage: %s", "", $instance->getUsage()), 'light_gray');
+        }
+    }
+
+    /**
+     * Displays help for a specific action.
+     *
+     * @param string $action
+     * @param \Vima\CodeIgniter\Commands\Actions\VimaActionInterface $instance
+     */
+    protected function showActionHelp(string $action, \Vima\CodeIgniter\Commands\Actions\VimaActionInterface $instance)
+    {
+        CLI::write("Vima Action Help - " . ucfirst($this->resource) . " " . ucfirst($action), 'yellow');
+        CLI::write("");
+        CLI::write("Description:", 'yellow');
+        CLI::write("  " . $instance->getDescription());
+        CLI::write("");
+        CLI::write("Usage:", 'yellow');
+        CLI::write("  php spark " . $instance->getUsage());
+        CLI::write("");
+
+        $options = $instance->getOptions();
+        if (!empty($options)) {
+            CLI::write("Options:", 'yellow');
+            foreach ($options as $opt => $desc) {
+                CLI::write(sprintf("  %-20s %s", CLI::color($opt, 'green'), $desc));
+            }
+            CLI::write("");
         }
     }
 }

@@ -60,4 +60,11 @@ class PermissionsAction extends BaseAction
     {
         return 'vima user permissions [user_id]';
     }
+
+    public function getOptions(): array
+    {
+        return [
+            '--limit' => 'Limit description characters length (default: 30).',
+        ];
+    }
 }
