@@ -23,13 +23,24 @@ class CreateAction extends BaseAction
         CLI::write('Executing Policy CreateAction...', 'cyan');
         $resource = $this->getOption('resource', $params) ?? 'App\Entities\Resource';
         $force = $this->getOption('force', $params) !== null;
+        $namespaceOpt = $this->getOption('namespace', $params) ?? $this->getOption('N', $params);
 
         $name = $params[0] ?? null;
         if ($name === null) {
             $name = CLI::prompt('Policy name');
         }
 
-        [$namespace, $className] = $this->parseClassName($name, 'App\Policies');
+        $defaultNamespace = 'App\Policies';
+        if ($namespaceOpt) {
+            $namespaceOpt = trim($namespaceOpt, '\\');
+            if (str_ends_with(strtolower($namespaceOpt), '\policies') || strtolower($namespaceOpt) === 'policies') {
+                $defaultNamespace = $namespaceOpt;
+            } else {
+                $defaultNamespace = $namespaceOpt . '\\Policies';
+            }
+        }
+
+        [$namespace, $className] = $this->parseClassName($name, $defaultNamespace);
 
         CLI::write("Creating policy: {$className} in namespace: {$namespace} for resource: {$resource}", 'cyan');
 
@@ -103,8 +114,10 @@ class CreateAction extends BaseAction
     public function getOptions(): array
     {
         return [
-            '--resource' => 'The target Resource class/entity name for the policy.',
-            '--force'    => 'Force overwrite the file if it already exists.',
+            '--resource'  => 'The target Resource class/entity name for the policy.',
+            '--force'     => 'Force overwrite the file if it already exists.',
+            '--namespace' => 'Namespace for the policy.',
+            '-N'          => 'Alias for --namespace.',
         ];
     }
 }

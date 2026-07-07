@@ -24,6 +24,10 @@ class VimaPolicyGeneratorTest extends VimaTestCase
         if (file_exists(APPPATH . 'Policies/BlogPolicy.php')) {
             unlink(APPPATH . 'Policies/BlogPolicy.php');
         }
+        $customPolicyPath = dirname(__DIR__, 2) . '/src/Policies/CustomTestPolicy.php';
+        if (file_exists($customPolicyPath)) {
+            unlink($customPolicyPath);
+        }
         parent::tearDown();
     }
 
@@ -53,5 +57,30 @@ class VimaPolicyGeneratorTest extends VimaTestCase
         $content = file_get_contents(APPPATH . 'Policies/BlogPolicy.php');
         $this->assertStringNotContainsString('Original Content', $content);
         $this->assertStringContainsString('class BlogPolicy', $content);
+    }
+
+    public function testGeneratorCreatesFileWithCustomNamespace()
+    {
+        command('vima:policy create CustomTestPolicy --namespace "Vima\\\\CodeIgniter" --resource "App\\\\Entities\\\\Blog"');
+
+        $customPolicyPath = dirname(__DIR__, 2) . '/src/Policies/CustomTestPolicy.php';
+        $this->assertFileExists($customPolicyPath);
+
+        $content = file_get_contents($customPolicyPath);
+        $this->assertStringContainsString('namespace Vima\CodeIgniter\Policies;', $content);
+        $this->assertStringContainsString('class CustomTestPolicy implements PolicyInterface', $content);
+    }
+
+    public function testPolicyListAction()
+    {
+        // First create a policy to ensure there is at least one auto-discovered policy
+        command('vima:policy create BlogPolicy --resource "App\\\\Entities\\\\Blog"');
+
+        ob_start();
+        command('vima:policy list');
+        $output = ob_get_clean();
+
+        $this->assertStringContainsString('BlogPolicy', $output);
+        $this->assertStringContainsString('App\Entities\Blog', $output);
     }
 }
