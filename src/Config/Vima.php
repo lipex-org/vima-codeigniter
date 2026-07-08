@@ -120,7 +120,24 @@ class Vima extends BaseConfig
             roleParents: new RoleParentColumns()
         );
 
-        $this->setup = new Setup($this->setupProviders);
+        // Auto-discover Setup Providers across all modules
+        $providers = $this->setupProviders;
+        try {
+            $locator = \Config\Services::locator();
+            $files = $locator->listFiles('Libraries/Vima');
+            foreach ($files as $file) {
+                $className = $locator->getClassname($file);
+                if ($className && class_exists($className) && is_subclass_of($className, \Vima\Core\Config\Contracts\SetupProviderInterface::class)) {
+                    if (!in_array($className, $providers, true)) {
+                        $providers[] = $className;
+                    }
+                }
+            }
+        } catch (\Throwable $e) {
+            // Fallback if services are not fully loaded during early CLI init
+        }
+
+        $this->setup = new Setup($providers);
     }
 
     // --------------------------------------------------------------------
