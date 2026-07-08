@@ -101,8 +101,9 @@ Follow this sequence to maintain a robust authorization layer. All subcommands/a
   > PHP: `can(Permissions::POSTS_EDIT, $post)`
   > TS: `Permissions.POSTS_EDIT`
 
-### 4. Generation
+### 4. Generation & AI Assistant Configuration
 - `php spark vima:policy create <Name> --resource <Class>`: Generates a policy template (supports `--namespace` or `-N` to target autoloader paths).
+- `php spark vima:ai publish`: Publishes AI assistant rules and workflows to the project root for various IDEs/agents (e.g. Cursor, Windsurf, VS Code, Cline, RooCode, Antigravity, JetBrains). Supports `--ide` and `--overwrite` options.
 
 ---
 

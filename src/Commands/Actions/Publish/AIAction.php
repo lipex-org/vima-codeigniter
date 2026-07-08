@@ -11,7 +11,6 @@
 namespace Vima\CodeIgniter\Commands\Actions\Publish;
 
 use CodeIgniter\CLI\CLI;
-use Vima\CodeIgniter\Commands\Actions\VimaActionInterface;
 use Vima\CodeIgniter\Commands\Actions\BaseAction;
 
 class AIAction extends BaseAction
@@ -83,7 +82,7 @@ class AIAction extends BaseAction
         if (copy($source, $dest)) {
             CLI::write("Published AI guidance for {$id} to {$filename}", 'green');
 
-            if ($id === 'vima') {
+            if ($id === 'antigravity') {
                 $this->publishWorkflows();
             }
         } else {
@@ -123,13 +122,13 @@ class AIAction extends BaseAction
 
     public function getUsage(): string
     {
-        return 'vima publish ai {options}';
+        return 'vima:ai publish [options]';
     }
 
     public function getOptions(): array
     {
         return [
-            '--ide' => 'Target IDE/Agent (cursor, windsurf, vscode, cline, roocode, antigravity, jetbrains, all).',
+            '--ide'       => 'Target IDE/Agent (cursor, windsurf, vscode, cline, roocode, antigravity, jetbrains, all).',
             '--overwrite' => 'Force overwrite existing file without prompting.',
         ];
     }

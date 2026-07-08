@@ -1415,16 +1415,16 @@
         },
         {
             "name": "vima/core",
-            "version": "v1.0.0",
+            "version": "v1.0.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/lipex-org/vima-core.git",
-                "reference": "b6a0e13ac9a0d2e5e1ba98e8a06e1c8c98e43b78"
+                "reference": "3a0fb777804003dce9e62de6c8dd50cb8d49b7c4"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/lipex-org/vima-core/zipball/b6a0e13ac9a0d2e5e1ba98e8a06e1c8c98e43b78",
-                "reference": "b6a0e13ac9a0d2e5e1ba98e8a06e1c8c98e43b78",
+                "url": "https://api.github.com/repos/lipex-org/vima-core/zipball/3a0fb777804003dce9e62de6c8dd50cb8d49b7c4",
+                "reference": "3a0fb777804003dce9e62de6c8dd50cb8d49b7c4",
                 "shasum": ""
             },
             "require": {
@@ -1458,9 +1458,9 @@
             "description": "Framework-agnostic RBAC + ABAC access control engine with pluggable storage backends and a built-in CLI.",
             "support": {
                 "issues": "https://github.com/lipex-org/vima-core/issues",
-                "source": "https://github.com/lipex-org/vima-core/tree/v1.0.0"
+                "source": "https://github.com/lipex-org/vima-core/tree/v1.0.1"
             },
-            "time": "2026-06-21T09:29:33+00:00"
+            "time": "2026-07-08T11:30:22+00:00"
         }
     ],
     "packages-dev": [
