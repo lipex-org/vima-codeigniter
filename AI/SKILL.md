@@ -53,6 +53,8 @@ Every class-based policy **must** implement `Vima\Core\Contracts\PolicyInterface
 namespace App\Policies;
 
 use Vima\Core\Policy\Contracts\PolicyInterface;
+use Vima\Core\Policy\Attributes\MapToPermission;
+use Vima\Core\Policy\DTOs\AccessContext;
 use App\Entities\Post;
 
 class PostPolicy implements PolicyInterface
@@ -62,10 +64,18 @@ class PostPolicy implements PolicyInterface
         return Post::class; // Essential for auto-resolving
     }
 
-    public function canEdit(\Vima\Core\Policy\DTOs\AccessContext $ctx, Post $post): bool
+    // Default convention: checks for 'posts.edit' or 'edit' and maps to canEdit
+    public function canEdit(AccessContext $ctx, Post $post): bool
     {
         // Owner or Admin can edit
         return $ctx->user->id === $post->user_id || can('admin.posts');
+    }
+
+    // Custom mapping: maps 'publish_action' permission directly to this method instead of naming convention
+    #[MapToPermission('publish_action')]
+    public function publishPost(AccessContext $ctx, Post $post): bool
+    {
+        return $ctx->user->id === $post->user_id && $post->isDraft();
     }
 }
 ```
