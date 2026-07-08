@@ -21,7 +21,7 @@ class AIAction extends BaseAction
         'vscode' => '.github/rules/vima.md',
         'cline' => '.cline/rules/vima.md',
         'roocode' => '.roo/rules/vima.md',
-        'antigravity' => 'agents/skills/vima/SKILL.md',
+        'antigravity' => '.agents/skills/vima/SKILL.md',
         'jetbrains' => '.jetbrains/rules/vima.md',
     ];
 
@@ -53,7 +53,7 @@ class AIAction extends BaseAction
 
     protected function publish(string $id, string $filename, bool $overwrite)
     {
-        $source = __DIR__ . '/../../../AI/SKILL.md';
+        $source = __DIR__ . '/../../../../AI/SKILL.md';
 
         if (!file_exists($source)) {
             CLI::error("Source guidance file not found at: {$source}");
@@ -92,7 +92,7 @@ class AIAction extends BaseAction
 
     protected function publishWorkflows()
     {
-        $sourceDir = __DIR__ . '/../../../AI/workflows';
+        $sourceDir = __DIR__ . '/../../../../AI/workflows';
         $destDir = ROOTPATH . '.agent/skills/vima/workflows';
 
         if (!is_dir($sourceDir)) {
@@ -128,7 +128,7 @@ class AIAction extends BaseAction
     public function getOptions(): array
     {
         return [
-            '--ide'       => 'Target IDE/Agent (cursor, windsurf, vscode, cline, roocode, antigravity, jetbrains, all).',
+            '--ide' => 'Target IDE/Agent (cursor, windsurf, vscode, cline, roocode, antigravity, jetbrains, all).',
             '--overwrite' => 'Force overwrite existing file without prompting.',
         ];
     }
