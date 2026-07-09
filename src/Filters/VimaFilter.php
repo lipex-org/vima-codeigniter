@@ -40,9 +40,12 @@ class VimaFilter implements FilterInterface
             return response()->setStatusCode(401);
         }
 
+        $statusCode = config('Vima')->getDenyStatusCode();
+
         foreach ($arguments as $permission) {
             if (!$vima->can($user, $permission)) {
-                return response()->setStatusCode(403)->setBody('Forbidden: Missing permission ' . $permission);
+                $errorMsg = ($statusCode === 404) ? 'Resource not found' : 'Forbidden: Missing permission ' . $permission;
+                return response()->setStatusCode($statusCode)->setBody($errorMsg);
             }
         }
 

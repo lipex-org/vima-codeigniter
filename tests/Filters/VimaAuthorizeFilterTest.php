@@ -68,4 +68,24 @@ class VimaAuthorizeFilterTest extends VimaTestCase
         $result = $this->get('test-auth-redirect');
         $result->assertRedirectTo('login');
     }
+
+    public function testAuthorizeFilterReturns404WhenConfigured()
+    {
+        $config = config('Vima');
+        $config->errorResponse['statusCode'] = 404;
+        $config->errorResponse['view404'] = 'Vima\CodeIgniter\Views\error_403'; // Use existing view for testing
+
+        vima_policy('test.deny', function ($user) {
+            return false;
+        });
+
+        $routes = service('routes');
+        $routes->get('test-auth-404', function () {
+            return 'OK';
+        }, ['filter' => 'vima_authorize:test.deny']);
+
+        $result = $this->get('test-auth-404');
+        $result->assertStatus(404);
+        $result->assertSee('Access Denied');
+    }
 }

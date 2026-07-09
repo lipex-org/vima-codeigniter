@@ -37,19 +37,25 @@ class VimaAuthorize implements RouteAttributeInterface
                 return Services::response()->redirect(site_url($this->redirectPage));
             }
 
+            $statusCode = $config->getDenyStatusCode();
+            $errorMsg = ($statusCode === 404) ? 'Resource not found' : 'Access denied';
+
             // Check if request expects JSON
             if (stripos($request->getHeaderLine('Accept'), 'application/json') !== false || $request->isAJAX()) {
                 return Services::response()
-                    ->setStatusCode(403)
+                    ->setStatusCode($statusCode)
                     ->setJSON([
-                        'error' => 'Access denied',
-                        'message' => "Access denied on permission '{$this->permission}'"
+                        'error' => $errorMsg,
+                        'message' => ($statusCode === 404) 
+                            ? "The requested resource could not be found."
+                            : "Access denied on permission '{$this->permission}'"
                     ]);
             }
 
-            $viewPath = $config->view403 ?? 'Vima\CodeIgniter\Views\error_403';
+            $viewPath = $config->getErrorView($statusCode);
+
             return Services::response()
-                ->setStatusCode(403)
+                ->setStatusCode($statusCode)
                 ->setBody(view($viewPath));
         }
 

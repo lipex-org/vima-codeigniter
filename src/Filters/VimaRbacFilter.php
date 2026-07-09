@@ -75,9 +75,10 @@ class VimaRbacFilter implements FilterInterface
                         'message' => 'User context not found'
                     ]);
             }
-            $viewPath = $config->view403 ?? 'Vima\CodeIgniter\Views\error_403';
+            $statusCode = $config->getDenyStatusCode();
+            $viewPath = $config->getErrorView($statusCode);
             return Services::response()
-                ->setStatusCode(403)
+                ->setStatusCode($statusCode)
                 ->setBody(view($viewPath));
         }
 
@@ -89,19 +90,24 @@ class VimaRbacFilter implements FilterInterface
                 return redirect()->to($page);
             }
 
+            $statusCode = $config->getDenyStatusCode();
+            $errorMsg = ($statusCode === 404) ? 'Resource not found' : 'Access denied';
+
             // Check if request expects JSON
             if (stripos($request->getHeaderLine('Accept'), 'application/json') !== false || $request->isAJAX()) {
                 return Services::response()
-                    ->setStatusCode(403)
+                    ->setStatusCode($statusCode)
                     ->setJSON([
-                        'error' => 'Access denied',
-                        'message' => "Access denied on role '{$role}'"
+                        'error' => $errorMsg,
+                        'message' => ($statusCode === 404) 
+                            ? "The requested resource could not be found."
+                            : "Access denied on role '{$role}'"
                     ]);
             }
 
-            $viewPath = $config->view403 ?? 'Vima\CodeIgniter\Views\error_403';
+            $viewPath = $config->getErrorView($statusCode);
             return Services::response()
-                ->setStatusCode(403)
+                ->setStatusCode($statusCode)
                 ->setBody(view($viewPath));
         }
     }

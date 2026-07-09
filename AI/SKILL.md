@@ -152,6 +152,17 @@ $routes->get('api/posts/(:num)', 'Posts::show', [
 Check if a user has a role *within* a specific context (e.g., project lead for project X):
 `Vima\Core\Vima::auth()->isPermitted($user, 'project.delete', ['project_id' => 10])`
 
+### 4. Custom Error Status Code (403 vs 404)
+By default, Vima returns a `403 Forbidden` response for authorization failures. You can configure it to return a `404 Not Found` response instead by modifying the `$errorResponse` array in `Config/Vima.php`:
+```php
+public array $errorResponse = [
+    'statusCode' => 404,
+    'view403'    => 'Vima\CodeIgniter\Views\error_403',
+    'view404'    => 'errors/html/error_404',
+];
+```
+All route filters and filter attributes will dynamically resolve these configurations using `$config->getDenyStatusCode()` and `$config->getErrorView($statusCode)`.
+
 ---
 
 ## 🚫 Critical Warnings (The "Don'ts")

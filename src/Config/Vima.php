@@ -85,26 +85,13 @@ class Vima extends BaseConfig
     ];
 
     /**
-     * Quickly checks if audit logging features are active.
+     * Error response configuration settings.
      */
-    public function isAuditEnabled(): bool
-    {
-        return (bool) ($this->audit['enabled'] ?? false);
-    }
-
-    /**
-     * Retrieve the audit log level.
-     */
-    public function getAuditLevel(): string
-    {
-        return $this->audit['level'] ?? 'all';
-    }
-
-    /**
-     * The view file to render on 403 Forbidden/Access Denied errors.
-     * @var string
-     */
-    public string $view403 = 'Vima\CodeIgniter\Views\error_403';
+    public array $errorResponse = [
+        'statusCode' => 403,
+        'view403' => 'Vima\CodeIgniter\Views\error_403',
+        'view404' => 'errors/html/error_404',
+    ];
 
     public function __construct()
     {
@@ -143,6 +130,42 @@ class Vima extends BaseConfig
     // --------------------------------------------------------------------
     // Convenience Helpers
     // --------------------------------------------------------------------
+
+    /**
+     * Quickly checks if audit logging features are active.
+     */
+    public function isAuditEnabled(): bool
+    {
+        return (bool) ($this->audit['enabled'] ?? false);
+    }
+
+    /**
+     * Retrieve the audit log level.
+     */
+    public function getAuditLevel(): string
+    {
+        return $this->audit['level'] ?? 'all';
+    }
+
+    /**
+     * Get the error status code for denied requests.
+     */
+    public function getDenyStatusCode(): int
+    {
+        return (int) ($this->errorResponse['statusCode'] ?? 403);
+    }
+
+    /**
+     * Get the view to render for the given status code.
+     */
+    public function getErrorView(int $statusCode): string
+    {
+        if ($statusCode === 404) {
+            return $this->errorResponse['view404'] ?? 'errors/html/error_404';
+        }
+
+        return $this->errorResponse['view403'] ?? 'Vima\CodeIgniter\Views\error_403';
+    }
 
     /**
      * Resolves the current user using the configured closure.
