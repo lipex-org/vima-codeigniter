@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "87c6c3be0a40ff9a7d03a9ef287149ea",
+    "content-hash": "388bd3f2e01e3823190b75376c26e6dc",
     "packages": [
         {
             "name": "codeigniter4/framework",
@@ -1415,17 +1415,11 @@
         },
         {
             "name": "vima/core",
-            "version": "v1.0.2",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/lipex-org/vima-core.git",
-                "reference": "8fae04603dc87a3e8377db07c5b2d43603160a6a"
-            },
+            "version": "dev-feature/bulk-actions",
             "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/lipex-org/vima-core/zipball/8fae04603dc87a3e8377db07c5b2d43603160a6a",
-                "reference": "8fae04603dc87a3e8377db07c5b2d43603160a6a",
-                "shasum": ""
+                "type": "path",
+                "url": "../core",
+                "reference": "142db663d738972c7bf681fd95330fe5f9dd7c4f"
             },
             "require": {
                 "php": ">=8.5",
@@ -1438,14 +1432,23 @@
             },
             "type": "library",
             "autoload": {
-                "files": [
-                    "src/functions.php"
-                ],
                 "psr-4": {
                     "Vima\\Core\\": "src/"
+                },
+                "files": [
+                    "src/functions.php"
+                ]
+            },
+            "autoload-dev": {
+                "psr-4": {
+                    "Vima\\Core\\Tests\\": "tests/"
                 }
             },
-            "notification-url": "https://packagist.org/downloads/",
+            "scripts": {
+                "test": [
+                    "phpunit"
+                ]
+            },
             "license": [
                 "MIT"
             ],
@@ -1456,11 +1459,9 @@
                 }
             ],
             "description": "Framework-agnostic RBAC + ABAC access control engine with pluggable storage backends and a built-in CLI.",
-            "support": {
-                "issues": "https://github.com/lipex-org/vima-core/issues",
-                "source": "https://github.com/lipex-org/vima-core/tree/v1.0.2"
-            },
-            "time": "2026-07-08T18:47:47+00:00"
+            "transport-options": {
+                "relative": true
+            }
         }
     ],
     "packages-dev": [
@@ -3386,7 +3387,9 @@
     ],
     "aliases": [],
     "minimum-stability": "dev",
-    "stability-flags": {},
+    "stability-flags": {
+        "vima/core": 20
+    },
     "prefer-stable": true,
     "prefer-lowest": false,
     "platform": {
