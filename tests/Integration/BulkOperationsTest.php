@@ -61,4 +61,30 @@ class BulkOperationsTest extends VimaTestCase
         $this->assertEmpty(Vima::user($this->user)->get()->roles());
         $this->assertEmpty(Vima::user($this->user)->get()->permissions()->direct());
     }
+
+    public function testUserBulkDenyAndUndenyIntegration()
+    {
+        Vima::roles()->save(new Role('ci_deny_role_1'));
+        Vima::roles()->save(new Role('ci_deny_role_2'));
+        Vima::permissions()->create('ci.deny.perm1');
+        Vima::permissions()->create('ci.deny.perm2');
+
+        // Bulk Deny
+        Vima::user($this->user)->deny()->role(['ci_deny_role_1' => 'Banned', 'ci_deny_role_2']);
+        Vima::user($this->user)->deny()->permission(['ci.deny.perm1' => 'Suspended', 'ci.deny.perm2']);
+
+        $this->assertTrue(Vima::user($this->user)->is()->denied()->role('ci_deny_role_1'));
+        $this->assertTrue(Vima::user($this->user)->is()->denied()->role('ci_deny_role_2'));
+        $this->assertTrue(Vima::user($this->user)->is()->denied()->permission('ci.deny.perm1'));
+        $this->assertTrue(Vima::user($this->user)->is()->denied()->permission('ci.deny.perm2'));
+
+        // Bulk Undeny
+        Vima::user($this->user)->undeny()->role(['ci_deny_role_1', 'ci_deny_role_2']);
+        Vima::user($this->user)->undeny()->permission(['ci.deny.perm1', 'ci.deny.perm2']);
+
+        $this->assertFalse(Vima::user($this->user)->is()->denied()->role('ci_deny_role_1'));
+        $this->assertFalse(Vima::user($this->user)->is()->denied()->role('ci_deny_role_2'));
+        $this->assertFalse(Vima::user($this->user)->is()->denied()->permission('ci.deny.perm1'));
+        $this->assertFalse(Vima::user($this->user)->is()->denied()->permission('ci.deny.perm2'));
+    }
 }

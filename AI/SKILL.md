@@ -22,8 +22,8 @@ The primary entry point. Access core services and the fluent builder API via `Vi
 - **User Resource**: `Vima\Core\Vima::user($user)`
   - `grant()->role($role)` / `grant()->permission($permission)` (Supports string, Role/Permission object, or arrays for bulk granting)
   - `revoke()->role($role)` / `revoke()->permission($permission)` (Supports string, Role/Permission object, or arrays for bulk revoking)
-  - `deny()->role($role, $reason, $expiresAt)` / `deny()->permission($permission, $reason, $expiresAt)`
-  - `undeny()->role($role)` / `undeny()->permission($permission)`
+  - `deny()->role($role, $reason, $expiresAt)` / `deny()->permission($permission, $reason, $expiresAt)` (Supports string, Role/Permission object, or arrays for bulk denying)
+  - `undeny()->role($role)` / `undeny()->permission($permission)` (Supports string, Role/Permission object, or arrays for bulk undenying)
   - `is()->superAdmin()` / `is()->denied()->role($role)` / `is()->denied()->permission($permission)`
   - `has()->role($role)` / `has()->permission($permission)`
   - `get()->roles($resolve)` / `get()->permissions()->direct()`
