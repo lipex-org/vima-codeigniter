@@ -20,8 +20,8 @@ The primary entry point. Access core services and the fluent builder API via `Vi
 
 #### The Fluent API:
 - **User Resource**: `Vima\Core\Vima::user($user)`
-  - `grant()->role($role)` / `grant()->permission($permission)`
-  - `revoke()->role($role)` / `revoke()->permission($permission)`
+  - `grant()->role($role)` / `grant()->permission($permission)` (Supports string, Role/Permission object, or arrays for bulk granting)
+  - `revoke()->role($role)` / `revoke()->permission($permission)` (Supports string, Role/Permission object, or arrays for bulk revoking)
   - `deny()->role($role, $reason, $expiresAt)` / `deny()->permission($permission, $reason, $expiresAt)`
   - `undeny()->role($role)` / `undeny()->permission($permission)`
   - `is()->superAdmin()` / `is()->denied()->role($role)` / `is()->denied()->permission($permission)`
@@ -29,7 +29,7 @@ The primary entry point. Access core services and the fluent builder API via `Vi
   - `get()->roles($resolve)` / `get()->permissions()->direct()`
 - **Role Resource**: `Vima\Core\Vima::role($role)`
   - `exists(): bool`
-  - `permissions()->add($permission)` / `permissions()->remove($permission)`
+  - `permissions()->add($permission)` / `permissions()->remove($permission)` (Supports string, Permission object, or arrays for bulk actions)
   - `parents()->add($parentRole)` / `parents()->remove($parentRole)`
 - **Permission Resource**: `Vima\Core\Vima::permission($permission)`
   - `exists(): bool`
