@@ -168,4 +168,22 @@ class VimaTraitTest extends VimaTestCase
         // Check that the permission is now actually denied via can()
         $this->assertFalse($this->controller->testCan('edit.post'));
     }
+
+    public function testAccessDeniedExceptionResponseCollector()
+    {
+        $customResponse = service('response')->setBody('Inertia JS Custom Layout');
+
+        \CodeIgniter\Events\Events::on('vima.access_denied_response', function ($exception, $collector) use ($customResponse) {
+            $collector->setResponse($customResponse);
+        });
+
+        $exception = \Vima\CodeIgniter\Exceptions\AccessDeniedException::forPermission('edit.post');
+        $response = $exception->getResponse();
+
+        $this->assertSame($customResponse, $response);
+        $this->assertEquals('Inertia JS Custom Layout', $response->getBody());
+
+        // Remove the event handler to clean up
+        \CodeIgniter\Events\Events::removeAllListeners('vima.access_denied_response');
+    }
 }
