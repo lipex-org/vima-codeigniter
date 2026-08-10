@@ -87,6 +87,12 @@ class VimaRegistrar
 
         $container->register(PolicyRegistryInterface::class, fn() => PolicyRegistry::instance());
 
+        // Register framework specific AccessDeniedException implementation
+        \Vima\Core\Exceptions\AccessDeniedException::useFactory(
+            fn(string $permission, mixed $user = null, mixed $userResolver = null) =>
+                \Vima\CodeIgniter\Exceptions\AccessDeniedException::forPermission($permission, $user, $userResolver)
+        );
+
         if (class_exists(\Config\Services::class)) {
             \Config\Services::injectMock('vima', $container->get(AuthorizationService::class));
         }
