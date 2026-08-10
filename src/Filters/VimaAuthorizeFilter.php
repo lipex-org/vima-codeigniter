@@ -18,7 +18,6 @@ use CodeIgniter\HTTP\RequestInterface;
 use CodeIgniter\HTTP\ResponseInterface;
 use Vima\CodeIgniter\Config\Vima;
 use Config\Services;
-use Vima\Core\Exceptions\AccessDeniedException;
 use Vima\Core\User\Services\UserResolutionService;
 use function Vima\Core\resolve;
 

@@ -14,7 +14,7 @@ use Vima\Core\Permission\Entities\Permission;
 use Vima\Core\Role\Entities\Role;
 use Vima\Core\Role\Entities\RolePermission;
 use Vima\Core\User\Entities\UserRole;
-use Vima\Core\Exceptions\AccessDeniedException;
+use Vima\Core\Exceptions\AccessDeniedExceptionInterface;
 use function Vima\Core\resolve;
 
 class VimaTraitTest extends VimaTestCase
@@ -138,7 +138,7 @@ class VimaTraitTest extends VimaTestCase
     {
         $this->controller->testAuthorize('edit.post'); // Should not throw exception
 
-        $this->expectException(AccessDeniedException::class);
+        $this->expectException(AccessDeniedExceptionInterface::class);
         $this->controller->testAuthorize('delete.post');
     }
 
@@ -146,7 +146,7 @@ class VimaTraitTest extends VimaTestCase
     {
         $this->controller->testAuthorizeAny(['edit.post', 'delete.post']); // Should not throw
 
-        $this->expectException(AccessDeniedException::class);
+        $this->expectException(AccessDeniedExceptionInterface::class);
         $this->controller->testAuthorizeAny(['delete.post', 'other.post']);
     }
 
@@ -154,7 +154,7 @@ class VimaTraitTest extends VimaTestCase
     {
         $this->controller->testAuthorizeAll(['edit.post', 'view.post']); // Should not throw
 
-        $this->expectException(AccessDeniedException::class);
+        $this->expectException(AccessDeniedExceptionInterface::class);
         $this->controller->testAuthorizeAll(['edit.post', 'delete.post']);
     }
 

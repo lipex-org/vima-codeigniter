@@ -11,6 +11,7 @@
 namespace Vima\CodeIgniter\Traits;
 
 use Vima\CodeIgniter\Config\Vima;
+use Vima\Core\Exceptions\AccessDeniedExceptionInterface;
 use Vima\Core\Exceptions\AccessDeniedException;
 use Vima\Core\Vima as VimaCore;
 
@@ -26,7 +27,7 @@ trait VimaTrait
      *
      * @param mixed $permission Or resource object
      * @param mixed ...$arguments
-     * @throws AccessDeniedException
+     * @throws AccessDeniedExceptionInterface
      */
     protected function authorize(string $permission, ...$arguments): void
     {
@@ -39,7 +40,7 @@ trait VimaTrait
      * Authorizes any of the permssions provided. Throws an exception if all are forbidden
      * @param array $permissions
      * @param array $arguments
-     * @throws AccessDeniedException
+     * @throws AccessDeniedExceptionInterface
      * @return void
      */
     protected function authorize_any(array $permissions, ...$arguments): void
@@ -54,7 +55,7 @@ trait VimaTrait
      * Authorizes all of the permssions provided. Throws an exception if any is forbidden
      * @param array $permissions
      * @param array $arguments
-     * @throws AccessDeniedException
+     * @throws AccessDeniedExceptionInterface
      * @return void
      */
     protected function authorize_all(array $permissions, ...$arguments): void
