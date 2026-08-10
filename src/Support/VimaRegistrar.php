@@ -92,8 +92,8 @@ class VimaRegistrar
             fn(string $permission, mixed $user = null, mixed $userResolver = null) => AccessDeniedException::forPermission($permission, $user, $userResolver)
         );
 
-        if (class_exists(\Config\Services::class)) {
-            \Config\Services::injectMock('vima', $container->get(\Vima\Core\VimaManager::class));
+        if (class_exists(Services::class)) {
+            Services::injectMock('vima', $container->get(\Vima\Core\VimaManager::class));
         }
 
         Discovery::discoverPolicies();
