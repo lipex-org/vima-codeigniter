@@ -10,21 +10,22 @@
 
 namespace Vima\CodeIgniter\Support;
 
+use CodeIgniter\Config\Factories;
+use Config\Services;
+use Vima\CodeIgniter\Exceptions\AccessDeniedException;
 use Vima\CodeIgniter\Repositories\AuditRepository;
 use Vima\Core\Audit\Contracts\AuditRepositoryInterface;
 use Vima\Core\AuthorizationService;
 use Vima\Core\Cache\Contracts\CacheInterface;
 use Vima\Core\Config\VimaConfig;
 use Vima\Core\Events\Contracts\EventDispatcherInterface;
+use Vima\Core\Exceptions\AccessDeniedException as CoreAccessDeniedException;
 use Vima\Core\Permission\Contracts\PermissionRepositoryInterface;
-use Vima\Core\Permission\Services\PermissionService;
 use Vima\Core\Policy\Contracts\PolicyRegistryInterface;
 use Vima\Core\Policy\Services\PolicyRegistry;
 use Vima\Core\Role\Contracts\RoleParentRepositoryInterface;
 use Vima\Core\Role\Contracts\RolePermissionRepositoryInterface;
 use Vima\Core\Role\Contracts\RoleRepositoryInterface;
-use Vima\Core\Role\Services\RoleService;
-use Vima\Core\Support\Deployment\Services\DeploymentService;
 use Vima\Core\Support\Discovery\Container;
 use Vima\Core\Support\Discovery\CoreBootstrapper;
 use Vima\Core\User\Contracts\UserDenyRepositoryInterface;
@@ -83,18 +84,18 @@ class VimaRegistrar
         // Register Config and User Resolver
         $container->register(VimaConfig::class, fn() => service('vima_config', false));
         // Inject mock config if Config\Vima mock is injected
-        \CodeIgniter\Config\Factories::injectMock('config', 'Vima', config('Vima'));
+        Factories::injectMock('config', 'Vima', config('Vima'));
 
         $container->register(PolicyRegistryInterface::class, fn() => PolicyRegistry::instance());
 
         // Register framework specific AccessDeniedException implementation
-        \Vima\Core\Exceptions\AccessDeniedException::useFactory(
+        CoreAccessDeniedException::useFactory(
             fn(string $permission, mixed $user = null, mixed $userResolver = null) =>
-                \Vima\CodeIgniter\Exceptions\AccessDeniedException::forPermission($permission, $user, $userResolver)
+            AccessDeniedException::forPermission($permission, $user, $userResolver)
         );
 
-        if (class_exists(\Config\Services::class)) {
-            \Config\Services::injectMock('vima', $container->get(AuthorizationService::class));
+        if (class_exists(Services::class)) {
+            Services::injectMock('vima', $container->get(AuthorizationService::class));
         }
 
         Discovery::discoverPolicies();

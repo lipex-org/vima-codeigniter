@@ -12,6 +12,7 @@ declare(strict_types=1);
 
 namespace Vima\CodeIgniter\Exceptions;
 
+use CodeIgniter\Events\Events;
 use CodeIgniter\HTTP\ResponsableInterface;
 use CodeIgniter\HTTP\ResponseInterface;
 use Vima\Core\Exceptions\AccessDeniedException as CoreAccessDeniedException;
@@ -27,9 +28,9 @@ class AccessDeniedException extends CoreAccessDeniedException implements Respons
     public function getResponse(): ResponseInterface
     {
         $collector = new ResponseCollector();
-        
+
         // Trigger CI4 event so other packages (e.g., Inertia adapter) can provide a custom response
-        \CodeIgniter\Events\Events::trigger('vima.access_denied_response', $this, $collector);
+        Events::trigger('vima.access_denied_response', $this, $collector);
 
         if ($collector->getResponse() !== null) {
             return $collector->getResponse();
@@ -47,7 +48,7 @@ class AccessDeniedException extends CoreAccessDeniedException implements Respons
                 ->setStatusCode($statusCode)
                 ->setJSON([
                     'error' => $errorMsg,
-                    'message' => ($statusCode === 404) 
+                    'message' => ($statusCode === 404)
                         ? "The requested resource could not be found."
                         : "Access denied on permission '{$this->permission}'"
                 ]);
