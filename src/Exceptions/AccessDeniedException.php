@@ -12,61 +12,42 @@ declare(strict_types=1);
 
 namespace Vima\CodeIgniter\Exceptions;
 
-use RuntimeException;
-use CodeIgniter\Exceptions\HTTPExceptionInterface;
-use Vima\Core\Exceptions\AccessDeniedExceptionInterface;
+use CodeIgniter\HTTP\ResponsableInterface;
+use CodeIgniter\HTTP\ResponseInterface;
+use Vima\Core\Exceptions\AccessDeniedException as CoreAccessDeniedException;
 
 /**
  * CodeIgniter 4 specific Access Denied Exception.
  */
-class AccessDeniedException extends RuntimeException implements AccessDeniedExceptionInterface, HTTPExceptionInterface
+class AccessDeniedException extends CoreAccessDeniedException implements ResponsableInterface
 {
-    public function __construct(
-        public readonly string $permission,
-        public readonly mixed $user = null,
-        public readonly ?string $userId = null,
-        string $message = ""
-    ) {
-        if ($message === "") {
-            $userPart = $userId !== null ? "user [{$userId}]" : "user";
-            $message = "Access denied for {$userPart} on permission '{$permission}'";
-        }
-        parent::__construct($message, 403);
-    }
-
-    public function getPermission(): string
+    /**
+     * Generate the HTTP response when this exception is thrown.
+     */
+    public function getResponse(): ResponseInterface
     {
-        return $this->permission;
-    }
+        $config = config('Vima');
+        $statusCode = $config->getDenyStatusCode();
+        $errorMsg = ($statusCode === 404) ? 'Resource not found' : 'Access denied';
 
-    public function getUser(): mixed
-    {
-        return $this->user;
-    }
+        $request = service('request');
+        $response = service('response');
 
-    public function getUserId(): ?string
-    {
-        return $this->userId;
-    }
-
-    public static function forPermission(string $permission, mixed $user = null, mixed $userResolver = null): self
-    {
-        $userId = null;
-        if ($user !== null) {
-            if ($userResolver !== null && method_exists($userResolver, 'resolveId')) {
-                try {
-                    $userId = (string) $userResolver->resolveId($user);
-                } catch (\Throwable $e) {
-                }
-            } elseif (method_exists($user, 'vimaGetId')) {
-                $userId = (string) $user->vimaGetId();
-            } elseif (method_exists($user, 'getId')) {
-                $userId = (string) $user->getId();
-            } elseif (isset($user->id)) {
-                $userId = (string) $user->id;
-            }
+        if (stripos($request->getHeaderLine('Accept'), 'application/json') !== false || $request->isAJAX()) {
+            return $response
+                ->setStatusCode($statusCode)
+                ->setJSON([
+                    'error' => $errorMsg,
+                    'message' => ($statusCode === 404) 
+                        ? "The requested resource could not be found."
+                        : "Access denied on permission '{$this->permission}'"
+                ]);
         }
 
-        return new self($permission, $user, $userId);
+        $viewPath = $config->getErrorView($statusCode);
+
+        return $response
+            ->setStatusCode($statusCode)
+            ->setBody(view($viewPath));
     }
 }
