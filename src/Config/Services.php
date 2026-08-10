@@ -73,7 +73,7 @@ if (!class_exists(Services::class, false)) {
         /**
          * Main Vima Access Manager
          */
-        public static function vima(bool $getShared = true): AuthorizationService
+        public static function vima(bool $getShared = true): \Vima\Core\VimaManager
         {
             if ($getShared) {
                 VimaRegistrar::init(false);
@@ -81,7 +81,7 @@ if (!class_exists(Services::class, false)) {
             }
 
             VimaRegistrar::init(false);
-            return resolve(AuthorizationService::class);
+            return resolve(\Vima\Core\VimaManager::class);
         }
 
 

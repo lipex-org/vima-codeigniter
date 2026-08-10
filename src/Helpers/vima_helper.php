@@ -17,7 +17,7 @@ if (!function_exists('vima')) {
     /**
      * Returns the Vima Access Manager service.
      */
-    function vima(): AuthorizationService
+    function vima(): \Vima\Core\VimaManager
     {
         return Services::vima();
     }

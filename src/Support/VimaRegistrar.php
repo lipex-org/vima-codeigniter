@@ -88,14 +88,12 @@ class VimaRegistrar
 
         $container->register(PolicyRegistryInterface::class, fn() => PolicyRegistry::instance());
 
-        // Register framework specific AccessDeniedException implementation
         CoreAccessDeniedException::useFactory(
-            fn(string $permission, mixed $user = null, mixed $userResolver = null) =>
-            AccessDeniedException::forPermission($permission, $user, $userResolver)
+            fn(string $permission, mixed $user = null, mixed $userResolver = null) => AccessDeniedException::forPermission($permission, $user, $userResolver)
         );
 
-        if (class_exists(Services::class)) {
-            Services::injectMock('vima', $container->get(AuthorizationService::class));
+        if (class_exists(\Config\Services::class)) {
+            \Config\Services::injectMock('vima', $container->get(\Vima\Core\VimaManager::class));
         }
 
         Discovery::discoverPolicies();
