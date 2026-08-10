@@ -2,9 +2,15 @@
 
 namespace Vima\CodeIgniter\Tests;
 
+use CodeIgniter\CLI\CLI;
+use CodeIgniter\Config\Factories;
 use CodeIgniter\Test\CIUnitTestCase;
 use CodeIgniter\Test\DatabaseTestTrait;
-use Vima\CodeIgniter\Database\Migrations\CreateVimaTables;
+use CodeIgniter\Test\Mock\MockInputOutput;
+use Config\Services;
+use Vima\CodeIgniter\Support\VimaRegistrar;
+use Vima\Core\Cache\Contracts\CacheInterface;
+use function Vima\Core\resolve;
 
 abstract class VimaTestCase extends CIUnitTestCase
 {
@@ -13,26 +19,33 @@ abstract class VimaTestCase extends CIUnitTestCase
     protected $refresh = true;
     protected $namespace = 'Vima\CodeIgniter';
 
+    protected MockInputOutput $io;
+
     protected function setUp(): void
     {
-        \CodeIgniter\Config\Factories::reset();
+        Factories::reset();
         parent::setUp();
-        \Vima\CodeIgniter\Support\VimaRegistrar::init(true);
+        VimaRegistrar::init(true);
 
         // Clear cache and context
         if (function_exists('vima')) {
-            \Vima\Core\resolve(\Vima\Core\Cache\Contracts\CacheInterface::class)->clear();
+            resolve(CacheInterface::class)->clear();
         }
-        if (class_exists(\Config\Services::class)) {
+        if (class_exists(Services::class)) {
             try {
-                \Config\Services::vima_context()->set(null);
+                Services::vima_context()->set(null);
             } catch (\Throwable $e) {}
         }
+
+        $this->io = new MockInputOutput();
+        CLI::setInputOutput($this->io);
     }
 
     protected function tearDown(): void
     {
         parent::tearDown();
+
+        CLI::resetInputOutput();
     }
 
     public static function setupBeforeClass(): void
