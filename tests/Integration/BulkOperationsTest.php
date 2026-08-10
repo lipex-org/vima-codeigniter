@@ -87,4 +87,16 @@ class BulkOperationsTest extends VimaTestCase
         $this->assertFalse(Vima::user($this->user)->is()->denied()->permission('ci.deny.perm1'));
         $this->assertFalse(Vima::user($this->user)->is()->denied()->permission('ci.deny.perm2'));
     }
+
+    public function testVimaHelperAccessToManager()
+    {
+        $role = vima()->roles()->save(new Role('helper_role'));
+        $this->assertInstanceOf(Role::class, $role);
+
+        vima()->role('helper_role')->permissions()->add(
+            vima()->permissions()->create('helper.perm')
+        );
+
+        $this->assertCount(1, vima()->role('helper_role')->permissions()->all());
+    }
 }
