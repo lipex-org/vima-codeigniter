@@ -26,6 +26,15 @@ class AccessDeniedException extends CoreAccessDeniedException implements Respons
      */
     public function getResponse(): ResponseInterface
     {
+        $collector = new ResponseCollector();
+        
+        // Trigger CI4 event so other packages (e.g., Inertia adapter) can provide a custom response
+        \CodeIgniter\Events\Events::trigger('vima.access_denied_response', $this, $collector);
+
+        if ($collector->getResponse() !== null) {
+            return $collector->getResponse();
+        }
+
         $config = config('Vima');
         $statusCode = $config->getDenyStatusCode();
         $errorMsg = ($statusCode === 404) ? 'Resource not found' : 'Access denied';
