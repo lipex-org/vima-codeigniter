@@ -16,6 +16,7 @@ use CodeIgniter\Events\Events;
 use CodeIgniter\HTTP\ResponsableInterface;
 use CodeIgniter\HTTP\ResponseInterface;
 use Vima\Core\Exceptions\AccessDeniedException as CoreAccessDeniedException;
+use Vima\Core\Exceptions\AccessDeniedExceptionInterface;
 
 /**
  * CodeIgniter 4 specific Access Denied Exception.
@@ -59,5 +60,13 @@ class AccessDeniedException extends CoreAccessDeniedException implements Respons
         return $response
             ->setStatusCode($statusCode)
             ->setBody(view($viewPath));
+    }
+
+    public static function forPermission(string $permission, mixed $user = null, mixed $userResolver = null): \Throwable&AccessDeniedExceptionInterface
+    {
+        $parent = parent::forPermission($permission, $user, $userResolver);
+
+        // instantialte a new instance to nesure it is an instance of this class
+        return new self($permission, $user, $parent->getUserId(), $parent->getMessage());
     }
 }
