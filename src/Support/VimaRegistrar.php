@@ -89,8 +89,10 @@ class VimaRegistrar
 
         $container->register(PolicyRegistryInterface::class, fn() => PolicyRegistry::instance());
 
-        CoreAccessDeniedException::useFactory(
-            fn(string $permission, mixed $user = null, mixed $userResolver = null) => AccessDeniedException::forPermission($permission, $user, $userResolver)
+        // Register framework specific AccessDeniedException factory
+        $container->register(
+            \Vima\Core\Exceptions\AccessDeniedExceptionFactoryInterface::class,
+            fn() => new \Vima\CodeIgniter\Exceptions\CodeIgniterAccessDeniedExceptionFactory()
         );
 
         if (class_exists(\Config\Services::class)) {
