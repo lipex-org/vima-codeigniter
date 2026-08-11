@@ -13,6 +13,7 @@ namespace Vima\CodeIgniter\Support;
 use CodeIgniter\Config\Factories;
 use Config\Services;
 use Vima\CodeIgniter\Exceptions\AccessDeniedException;
+use Vima\CodeIgniter\Exceptions\CodeIgniterAccessDeniedExceptionFactory;
 use Vima\CodeIgniter\Repositories\AuditRepository;
 use Vima\Core\Audit\Contracts\AuditRepositoryInterface;
 use Vima\Core\AuthorizationService;
@@ -20,6 +21,7 @@ use Vima\Core\Cache\Contracts\CacheInterface;
 use Vima\Core\Config\VimaConfig;
 use Vima\Core\Events\Contracts\EventDispatcherInterface;
 use Vima\Core\Exceptions\AccessDeniedException as CoreAccessDeniedException;
+use Vima\Core\Exceptions\AccessDeniedExceptionFactoryInterface;
 use Vima\Core\Permission\Contracts\PermissionRepositoryInterface;
 use Vima\Core\Policy\Contracts\PolicyRegistryInterface;
 use Vima\Core\Policy\Services\PolicyRegistry;
@@ -90,12 +92,12 @@ class VimaRegistrar
 
         // Register framework specific AccessDeniedException factory
         $container->register(
-            \Vima\Core\Exceptions\AccessDeniedExceptionFactoryInterface::class,
-            fn() => new \Vima\CodeIgniter\Exceptions\CodeIgniterAccessDeniedExceptionFactory()
+            AccessDeniedExceptionFactoryInterface::class,
+            fn() => new CodeIgniterAccessDeniedExceptionFactory()
         );
 
-        if (class_exists(\Config\Services::class)) {
-            \Config\Services::injectMock('vima', $container->get(\Vima\Core\VimaManager::class));
+        if (class_exists(Services::class)) {
+            Services::injectMock('vima', $container->get(\Vima\Core\VimaManager::class));
         }
 
         Discovery::discoverPolicies();
