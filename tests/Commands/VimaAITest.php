@@ -2,6 +2,7 @@
 
 namespace Vima\CodeIgniter\Tests\Commands;
 
+use CodeIgniter\CLI\CLI;
 use Vima\CodeIgniter\Tests\VimaTestCase;
 
 class VimaAITest extends VimaTestCase

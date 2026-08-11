@@ -59,7 +59,10 @@ class AccessDeniedException extends CoreAccessDeniedException implements Respons
 
         return $response
             ->setStatusCode($statusCode)
-            ->setBody(view($viewPath));
+            ->setBody(view($viewPath, [
+                'message' => $errorMsg,
+                'permission' => $this->permission
+            ]));
     }
 
     public static function forPermission(string $permission, mixed $user = null, mixed $userResolver = null): \Throwable&AccessDeniedExceptionInterface
