@@ -15,9 +15,22 @@ use Vima\Core\Vima;
 
 final class VimaSyncTest extends VimaTestCase
 {
+
+    protected MockInputOutput $io;
+
+    protected function tearDown(): void
+    {
+        parent::tearDown();
+
+        CLI::resetInputOutput();
+    }
+
     public function setUp(): void
     {
         parent::setUp();
+
+        $this->io = new MockInputOutput();
+        CLI::setInputOutput($this->io);
         $setup = new Setup();
 
         $config = service('vima_config');

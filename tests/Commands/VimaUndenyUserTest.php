@@ -10,6 +10,24 @@ use Vima\Core\Permission\Entities\Permission;
 
 class VimaUndenyUserTest extends VimaTestCase
 {
+
+    protected MockInputOutput $io;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->io = new MockInputOutput();
+        CLI::setInputOutput($this->io);
+    }
+
+    protected function tearDown(): void
+    {
+        parent::tearDown();
+
+        CLI::resetInputOutput();
+    }
+
     public function testUndenyUser()
     {
         /**
@@ -23,13 +41,8 @@ class VimaUndenyUserTest extends VimaTestCase
 
         $this->assertTrue($userDenyRepo->isDenied(1, $perm->id));
 
-        $io = new MockInputOutput();
-        CLI::setInputOutput($io);
-
         command('vima:user undeny 1 forbidden.perm');
 
         $this->assertFalse($userDenyRepo->isDenied(1, $perm->id));
-
-        CLI::resetInputOutput();
     }
 }

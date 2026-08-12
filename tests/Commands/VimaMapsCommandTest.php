@@ -2,6 +2,8 @@
 
 namespace Vima\CodeIgniter\Tests\Commands;
 
+use CodeIgniter\CLI\CLI;
+use CodeIgniter\Test\Mock\MockInputOutput;
 use Vima\CodeIgniter\Tests\VimaTestCase;
 use Vima\Core\Role\Entities\Role;
 use Vima\Core\Permission\Entities\Permission;
@@ -13,10 +15,16 @@ class VimaMapsCommandTest extends VimaTestCase
     private string $mappingFile;
     private string $rolesFile;
     private string $permsFile;
+    protected MockInputOutput $io;
 
     protected function setUp(): void
     {
         parent::setUp();
+
+        parent::setUp();
+
+        $this->io = new MockInputOutput();
+        CLI::setInputOutput($this->io);
 
         $this->vimaDir = APPPATH . '../.vima/';
         $this->mappingFile = $this->vimaDir . 'mapping.json';
@@ -46,6 +54,8 @@ class VimaMapsCommandTest extends VimaTestCase
         }
 
         parent::tearDown();
+
+        CLI::resetInputOutput();
     }
 
     public function testMapsGenerationIncludesDatabaseItems()

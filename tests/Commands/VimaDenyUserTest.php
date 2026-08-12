@@ -9,6 +9,23 @@ use Vima\Core\Permission\Entities\Permission;
 
 class VimaDenyUserTest extends VimaTestCase
 {
+
+    protected MockInputOutput $io;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->io = new MockInputOutput();
+        CLI::setInputOutput($this->io);
+    }
+
+    protected function tearDown(): void
+    {
+        parent::tearDown();
+
+        CLI::resetInputOutput();
+    }
     public function testDenyUser()
     {
         $permRepo = service('vima_permissions');

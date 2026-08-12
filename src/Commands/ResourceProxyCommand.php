@@ -38,6 +38,8 @@ abstract class ResourceProxyCommand extends BaseCommand
      */
     protected array $actions = [];
 
+    protected array $params = [];
+
     /**
      * Actually execute a command.
      *
@@ -45,9 +47,17 @@ abstract class ResourceProxyCommand extends BaseCommand
      */
     public function run(array $params)
     {
+        $this->params = $params;
         $action = array_shift($params);
 
-        if (empty($action) || $action === 'help') {
+        $showHelp = false;
+        foreach ($params as $key => $val) {
+            if ($key === 'help' && $val === null) {
+                $showHelp = true;
+            }
+        }
+
+        if (empty($action) || $action === 'help' || $showHelp) {
             $this->showHelp();
             return;
         }
@@ -78,8 +88,13 @@ abstract class ResourceProxyCommand extends BaseCommand
      */
     public function showHelp()
     {
-        $params = CLI::getSegments();
-        $action = $params[1] ?? null;
+        helper('filesystem');
+        $params = $this->params ?? CLI::getSegments();
+        $action = $params[0] ?? null;
+
+        if (is_file($action)) {
+            $action = $params[1] ?? null;
+        }
 
         if ($action && $action !== 'help') {
             /**

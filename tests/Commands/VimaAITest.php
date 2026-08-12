@@ -3,10 +3,24 @@
 namespace Vima\CodeIgniter\Tests\Commands;
 
 use CodeIgniter\CLI\CLI;
+use CodeIgniter\Test\Mock\MockInputOutput;
+use CodeIgniter\Test\StreamFilterTrait;
 use Vima\CodeIgniter\Tests\VimaTestCase;
 
 class VimaAITest extends VimaTestCase
 {
+    use StreamFilterTrait;
+
+    protected MockInputOutput $io;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->io = new MockInputOutput();
+        CLI::setInputOutput($this->io);
+    }
+
     protected function tearDown(): void
     {
         // Clean up generated files
@@ -17,7 +31,7 @@ class VimaAITest extends VimaTestCase
             @rmdir(dirname(dirname($cursorFile)));
         }
 
-        $skillFile = ROOTPATH . '.agent/skills/vima/SKILL.md';
+        $skillFile = ROOTPATH . '.agents/skills/vima/SKILL.md';
         if (file_exists($skillFile)) {
             unlink($skillFile);
         }
@@ -31,20 +45,30 @@ class VimaAITest extends VimaTestCase
         }
 
         parent::tearDown();
+
+        CLI::resetInputOutput();
     }
 
     public function testAIPublishCursor()
     {
-        command('vima:ai publish --ide cursor --overwrite');
+        $this->io->setInputs([
+            'cursor'
+        ]);
+
+        command('vima:ai publish --overwrite');
 
         $this->assertFileExists(ROOTPATH . '.cursor/rules/vima.md');
     }
 
     public function testAIPublishAntigravity()
     {
-        command('vima:ai publish --ide antigravity --overwrite');
+        $this->io->setInputs([
+            'antigravity'
+        ]);
 
-        $this->assertFileExists(ROOTPATH . '.agent/skills/vima/SKILL.md');
+        command('vima:ai publish --overwrite');
+
+        $this->assertFileExists(ROOTPATH . '.agents/skills/vima/SKILL.md');
         $this->assertFileExists(ROOTPATH . '.agent/skills/vima/workflows/vima_feature_implementation.md');
     }
 }

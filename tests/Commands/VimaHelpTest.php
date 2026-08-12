@@ -2,18 +2,33 @@
 
 namespace Vima\CodeIgniter\Tests\Commands;
 
+use CodeIgniter\CLI\CLI;
+use CodeIgniter\Test\Mock\MockInputOutput;
 use Vima\CodeIgniter\Tests\VimaTestCase;
-use CodeIgniter\Test\StreamFilterTrait;
 
 class VimaHelpTest extends VimaTestCase
 {
-    use StreamFilterTrait;
+    protected MockInputOutput $io;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->io = new MockInputOutput();
+        CLI::setInputOutput($this->io);
+    }
+
+    protected function tearDown(): void
+    {
+        parent::tearDown();
+
+        CLI::resetInputOutput();
+    }
     public function testPolicyCreateHelp()
     {
         command('vima:policy create --help');
 
-        $buffer = $this->getStreamFilterBuffer();
+        $buffer = $this->io->getOutput();
 
         $this->assertStringContainsString('Vima Action Help - Policy Create', $buffer);
         $this->assertStringContainsString('Description:', $buffer);
@@ -28,7 +43,7 @@ class VimaHelpTest extends VimaTestCase
     {
         command('vima:role create --help');
 
-        $buffer = $this->getStreamFilterBuffer();
+        $buffer = $this->io->getOutput();
 
         $this->assertStringContainsString('Vima Action Help - Role Create', $buffer);
         $this->assertStringContainsString('Create a new role', $buffer);

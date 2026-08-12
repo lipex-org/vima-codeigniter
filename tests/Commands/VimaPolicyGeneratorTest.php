@@ -76,9 +76,9 @@ class VimaPolicyGeneratorTest extends VimaTestCase
         // First create a policy to ensure there is at least one auto-discovered policy
         command('vima:policy create BlogPolicy --resource "App\\\\Entities\\\\Blog"');
 
-        ob_start();
         command('vima:policy list');
-        $output = ob_get_clean();
+
+        $output = $this->getStreamFilterBuffer();
 
         $this->assertStringContainsString('BlogPolicy', $output);
         $this->assertStringContainsString('App\Entities\Blog', $output);
