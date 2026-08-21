@@ -38,7 +38,7 @@ trait VimaTrait
 
     /**
      * Authorizes any of the permssions provided. Throws an exception if all are forbidden
-     * @param array $permissions
+     * @param array<callable|string> $permissions
      * @param array $arguments
      * @throws AccessDeniedExceptionInterface
      * @return void
@@ -53,7 +53,7 @@ trait VimaTrait
 
     /**
      * Authorizes all of the permssions provided. Throws an exception if any is forbidden
-     * @param array $permissions
+     * @param array<callable|string> $permissions
      * @param array $arguments
      * @throws AccessDeniedExceptionInterface
      * @return void
@@ -79,7 +79,7 @@ trait VimaTrait
 
     /**
      * Performs a can check on all of the permissions provided and returns true on the first permissible action for the current user
-     * @param array $permissions
+     * @param array<callable|string> $permissions
      * @param array $arguments
      * @return bool
      */
@@ -90,7 +90,7 @@ trait VimaTrait
 
     /**
      * Performs a can check on all of the permissions provided and returns true on the first impermissible action for the current user
-     * @param array $permissions
+     * @param array<callable|string> $permissions
      * @param array $arguments
      * @return bool
      */
@@ -152,6 +152,7 @@ trait VimaTrait
         if (!$user) {
             return false;
         }
+
         return VimaCore::user($user)->is()->denied()->permission($permission);
     }
 

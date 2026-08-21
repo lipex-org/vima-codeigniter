@@ -78,7 +78,19 @@ if (!function_exists("can_any")) {
      */
     function can_any(array $permissions, ...$arguments): bool
     {
+        // $permssions can contain a callbale
+
+
         foreach ($permissions as $perm) {
+            if (is_callable($perm)) {
+                try {
+                    if (call_user_func($perm())) {
+                        return true;
+                    }
+                } catch (\Throwable $e) {
+                }
+            }
+
             if (can($perm, ...$arguments)) {
                 return true;
             }
@@ -91,13 +103,21 @@ if (!function_exists("can_any")) {
 if (!function_exists("can_all")) {
     /**
      * Performs authorization checks on each permssion given and returns false on the first non-permitted action
-     * @param array $permissions
+     * @param array<string|callable> $permissions
      * @param array $arguments
      * @return bool
      */
     function can_all(array $permissions, ...$arguments): bool
     {
         foreach ($permissions as $perm) {
+            if (is_callable($perm)) {
+                try {
+                    if (!call_user_func($perm())) {
+                        return false;
+                    }
+                } catch (\Throwable $e) {
+                }
+            }
             if (!can($perm, ...$arguments)) {
                 return false;
             }
