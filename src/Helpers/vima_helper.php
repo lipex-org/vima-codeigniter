@@ -78,21 +78,18 @@ if (!function_exists("can_any")) {
      */
     function can_any(array $permissions, ...$arguments): bool
     {
-        // $permssions can contain a callbale
-
-
         foreach ($permissions as $perm) {
             if (is_callable($perm)) {
                 try {
-                    if (call_user_func($perm())) {
+                    if ($perm()) {
                         return true;
                     }
                 } catch (\Throwable $e) {
                 }
-            }
-
-            if (can($perm, ...$arguments)) {
-                return true;
+            } else {
+                if (can($perm, ...$arguments)) {
+                    return true;
+                }
             }
         }
 
@@ -112,14 +109,15 @@ if (!function_exists("can_all")) {
         foreach ($permissions as $perm) {
             if (is_callable($perm)) {
                 try {
-                    if (!call_user_func($perm())) {
+                    if (!$perm()) {
                         return false;
                     }
                 } catch (\Throwable $e) {
                 }
-            }
-            if (!can($perm, ...$arguments)) {
-                return false;
+            } else {
+                if (!can($perm, ...$arguments)) {
+                    return false;
+                }
             }
         }
 

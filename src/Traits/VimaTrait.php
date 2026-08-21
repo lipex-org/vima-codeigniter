@@ -46,7 +46,16 @@ trait VimaTrait
     protected function authorize_any(array $permissions, ...$arguments): void
     {
         if (!$this->can_any($permissions, ...$arguments)) {
-            throw AccessDeniedException::forPermission(implode(' or ', $permissions));
+            $permssionStr = '';
+
+            foreach ($permissions as $p) {
+                if (is_callable($p)) {
+                    $permssionStr .= "Unknown (callable) or ";
+                } else {
+                    $permssionStr .= "{$p} or ";
+                }
+            }
+            throw AccessDeniedException::forPermission(trim($permssionStr, 'or '));
         }
     }
 
@@ -61,7 +70,16 @@ trait VimaTrait
     protected function authorize_all(array $permissions, ...$arguments): void
     {
         if (!$this->can_all($permissions, ...$arguments)) {
-            throw AccessDeniedException::forPermission(implode(' or ', $permissions));
+            $permssionStr = '';
+
+            foreach ($permissions as $p) {
+                if (is_callable($p)) {
+                    $permssionStr .= "Unknown (callable) or ";
+                } else {
+                    $permssionStr .= "{$p} or ";
+                }
+            }
+            throw AccessDeniedException::forPermission(trim($permssionStr, 'or '));
         }
     }
 
