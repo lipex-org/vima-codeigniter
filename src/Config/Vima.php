@@ -231,6 +231,39 @@ class Vima extends BaseConfig
     }
 
     /**
+     * Discovers all policy classes across all registered modules and directories.
+     *
+     * @return array<class-string>
+     */
+    public function getDiscoveredPolicies(): array
+    {
+        $discoveredPolicies = [];
+        if (!($this->policies['autoDiscover'] ?? true)) {
+            return $discoveredPolicies;
+        }
+
+        try {
+            $directory = $this->policies['directory'] ?? 'Policies';
+            $locator = \Config\Services::locator();
+            $files = $locator->listFiles($directory);
+            foreach ($files as $file) {
+                $className = $locator->getClassname($file);
+                if ($className && class_exists($className) && !(new \ReflectionClass($className))->isAbstract()) {
+                    if (is_subclass_of($className, \Vima\Core\Policy\Contracts\PolicyInterface::class)) {
+                        if (!in_array($className, $discoveredPolicies, true)) {
+                            $discoveredPolicies[] = $className;
+                        }
+                    }
+                }
+            }
+        } catch (\Throwable $e) {
+            // Fallback if services are not fully loaded during early CLI init
+        }
+
+        return $discoveredPolicies;
+    }
+
+    /**
      * Maps the CI4 array-structured configuration back to the strict Core DTO.
      */
     public function toVimaConfig(): VimaConfig
@@ -243,7 +276,9 @@ class Vima extends BaseConfig
                 id: $this->user['methods']['id'] ?? null
             ),
             policy: new PolicyConfig(
-                registered: $this->policies['registered']
+                registered: $this->policies['registered'] ?? [],
+                discovered: $this->getDiscoveredPolicies(),
+                autoDiscover: (bool) ($this->policies['autoDiscover'] ?? true)
             ),
             superAdminRole: $this->superAdmin['role'] ?? null,
             superAdminBypass: $this->superAdmin['bypass'] ?? false,

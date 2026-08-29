@@ -12,6 +12,7 @@ namespace Vima\CodeIgniter\Commands;
 
 use Vima\CodeIgniter\Commands\Actions\Policy\CreateAction;
 use Vima\CodeIgniter\Commands\Actions\Policy\ListAction;
+use Vima\CodeIgniter\Commands\Actions\Policy\CacheAction;
 
 class PolicyCommand extends ResourceProxyCommand
 {
@@ -22,5 +23,6 @@ class PolicyCommand extends ResourceProxyCommand
     protected array $actions = [
         'create' => CreateAction::class,
         'list'   => ListAction::class,
+        'cache'  => CacheAction::class,
     ];
 }

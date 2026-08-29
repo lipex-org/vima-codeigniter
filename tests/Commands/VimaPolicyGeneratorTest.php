@@ -83,4 +83,25 @@ class VimaPolicyGeneratorTest extends VimaTestCase
         $this->assertStringContainsString('BlogPolicy', $output);
         $this->assertStringContainsString('App\Entities\Blog', $output);
     }
+
+    public function testPolicyCacheAction()
+    {
+        command('vima:policy create BlogPolicy --resource "App\\\\Entities\\\\Blog"');
+
+        command('vima:policy cache');
+
+        $output = $this->getStreamFilterBuffer();
+
+        $this->assertStringContainsString('BlogPolicy', $output);
+        $this->assertStringContainsString('Successfully cached', $output);
+    }
+
+    public function testPolicyCacheClearAction()
+    {
+        command('vima:policy cache --clear');
+
+        $output = $this->getStreamFilterBuffer();
+
+        $this->assertStringContainsString('Policy mappings cache cleared successfully', $output);
+    }
 }

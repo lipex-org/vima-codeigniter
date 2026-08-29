@@ -52,13 +52,18 @@ abstract class ResourceProxyCommand extends BaseCommand
 
         $showHelp = false;
         foreach ($params as $key => $val) {
-            if ($key === 'help' && $val === null) {
+            if ($key === 'help' || $key === 'h' || $val === '--help' || $val === '-h' || $val === 'help') {
                 $showHelp = true;
             }
         }
 
+        if (CLI::getOption('help') !== null || CLI::getOption('h') !== null) {
+            $showHelp = true;
+        }
+
         if (empty($action) || $action === 'help' || $showHelp) {
-            $this->showHelp();
+            $targetAction = ($action !== 'help' && !empty($action)) ? $action : ($params[0] ?? null);
+            $this->showHelp($targetAction);
             return;
         }
 
@@ -86,14 +91,16 @@ abstract class ResourceProxyCommand extends BaseCommand
     /**
      * Displays help for the resource.
      */
-    public function showHelp()
+    public function showHelp(?string $action = null)
     {
         helper('filesystem');
-        $params = $this->params ?? CLI::getSegments();
-        $action = $params[0] ?? null;
+        if ($action === null) {
+            $params = $this->params ?? CLI::getSegments();
+            $action = $params[0] ?? null;
 
-        if (is_file($action)) {
-            $action = $params[1] ?? null;
+            if (is_file($action)) {
+                $action = $params[1] ?? null;
+            }
         }
 
         if ($action && $action !== 'help') {
