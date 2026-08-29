@@ -13,6 +13,7 @@ namespace Vima\CodeIgniter\Config;
 
 use CodeIgniter\Config\BaseConfig;
 use Vima\CodeIgniter\Libraries\Setup as SetupLibrary;
+use Vima\CodeIgniter\Support\Discovery;
 use Vima\Core\Config\DTOs\PolicyConfig;
 use Vima\Core\Config\DTOs\Setup;
 use Vima\Core\Config\DTOs\UserMethods;
@@ -237,30 +238,7 @@ class Vima extends BaseConfig
      */
     public function getDiscoveredPolicies(): array
     {
-        $discoveredPolicies = [];
-        if (!($this->policies['autoDiscover'] ?? true)) {
-            return $discoveredPolicies;
-        }
-
-        try {
-            $directory = $this->policies['directory'] ?? 'Policies';
-            $locator = \Config\Services::locator();
-            $files = $locator->listFiles($directory);
-            foreach ($files as $file) {
-                $className = $locator->getClassname($file);
-                if ($className && class_exists($className) && !(new \ReflectionClass($className))->isAbstract()) {
-                    if (is_subclass_of($className, \Vima\Core\Policy\Contracts\PolicyInterface::class)) {
-                        if (!in_array($className, $discoveredPolicies, true)) {
-                            $discoveredPolicies[] = $className;
-                        }
-                    }
-                }
-            }
-        } catch (\Throwable $e) {
-            // Fallback if services are not fully loaded during early CLI init
-        }
-
-        return $discoveredPolicies;
+        return Discovery::getPolicies($this->policies['directory'] ?? 'Policies');
     }
 
     /**

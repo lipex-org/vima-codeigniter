@@ -44,9 +44,9 @@ Events::on('vima.event', static function ($event) {
 
         $userId = $data['userId'] ?? null;
         if ($userId !== null) {
-            $prefix = rtrim($config->cachePrefix, '_:');
-            $cache->delete($prefix . ':user:' . $userId . ':roles');
-            $cache->delete($prefix . ':user:' . $userId . ':permissions');
+            $prefix = rtrim($config->cachePrefix, '_:') ?: 'vima';
+            $cache->delete($prefix . '_user_' . $userId . '_roles');
+            $cache->delete($prefix . '_user_' . $userId . '_permissions');
         }
     } elseif ($name === SyncFinished::class || str_contains($name, 'SyncFinished')) {
         $cache = Services::vima_cache(true);
