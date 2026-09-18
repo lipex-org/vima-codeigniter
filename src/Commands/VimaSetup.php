@@ -181,8 +181,9 @@ class VimaSetup extends BaseCommand
     protected function registerHelper()
     {
         $path = APPPATH . 'Config/Autoload.php';
-        if (!file_exists($path))
+        if (!file_exists($path)) {
             return;
+        }
 
         $content = file_get_contents($path);
         $helperName = 'Vima\CodeIgniter\Helpers\vima';
@@ -192,15 +193,25 @@ class VimaSetup extends BaseCommand
         }
 
         // Search for $helpers array
-        $pattern = '/(public \$helpers = \[)(.*?)(\];)/s';
+        $pattern = '/(public\s+\$helpers\s*=\s*\[)(.*?)(\];)/s';
         if (preg_match($pattern, $content, $matches)) {
             $currentHelpers = trim($matches[2]);
-            if (empty($currentHelpers)) {
-                $newHelpers = "\n        '{$helperName}'\n    ";
+            // Strip any trailing comma and surrounding whitespace
+            $currentHelpers = rtrim($currentHelpers, ", \t\n\r\0\x0B");
+
+            if ($currentHelpers === '') {
+                $newHelpers = "\n        '{$helperName}',\n    ";
             } else {
-                $newHelpers = $currentHelpers . ",\n        '{$helperName}'";
+                $newHelpers = "\n        " . $currentHelpers . ",\n        '{$helperName}',\n    ";
             }
             $content = str_replace($matches[0], $matches[1] . $newHelpers . $matches[3], $content);
+
+            // Clean up any accidental double commas in $helpers array
+            $content = preg_replace_callback('/(public\s+\$helpers\s*=\s*\[)(.*?)(\];)/s', function ($m) {
+                $sanitized = preg_replace('/,(\s*,)+/', ',', $m[2]);
+                return $m[1] . $sanitized . $m[3];
+            }, $content);
+
             file_put_contents($path, $content);
         } else {
             CLI::error('Failed to register helper.');
