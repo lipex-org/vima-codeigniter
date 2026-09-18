@@ -27,9 +27,26 @@ class RoleParentRepository implements RoleParentRepositoryInterface
     public function assign(RoleParent $relationship): void
     {
         $cols = service('vima_config')->columns->roleParents;
+
+        $roleId = $relationship->roleId;
+        if (! is_numeric($roleId)) {
+            $role = service('vima_roles')->findByName((string) $roleId);
+            if ($role && $role->id) {
+                $roleId = (int) $role->id;
+            }
+        }
+
+        $parentId = $relationship->parentId;
+        if (! is_numeric($parentId)) {
+            $pRole = service('vima_roles')->findByName((string) $parentId);
+            if ($pRole && $pRole->id) {
+                $parentId = (int) $pRole->id;
+            }
+        }
+
         $data = [
-            $cols->roleId => $relationship->roleId,
-            $cols->parentId => $relationship->parentId,
+            $cols->roleId => $roleId,
+            $cols->parentId => $parentId,
         ];
 
         // Check for existing relationship to avoid duplicates
