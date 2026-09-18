@@ -188,31 +188,52 @@ class VimaSetup extends BaseCommand
         $content = file_get_contents($path);
         $helperName = 'Vima\CodeIgniter\Helpers\vima';
 
-        if (strpos($content, $helperName) !== false) {
-            return;
-        }
-
-        // Search for $helpers array
-        $pattern = '/(public\s+\$helpers\s*=\s*\[)(.*?)(\];)/s';
+        // Search for $helpers array (matching public/protected, optional array type hint)
+        $pattern = '/((?:public|protected)\s+(?:array\s+)?\$helpers\s*=\s*\[)(.*?)(\];)/s';
         if (preg_match($pattern, $content, $matches)) {
-            $currentHelpers = trim($matches[2]);
-            // Strip any trailing comma and surrounding whitespace
-            $currentHelpers = rtrim($currentHelpers, ", \t\n\r\0\x0B");
+            $prefix = $matches[1];
+            $inner = $matches[2];
+            $suffix = $matches[3];
 
-            if ($currentHelpers === '') {
-                $newHelpers = "\n        '{$helperName}',\n    ";
-            } else {
-                $newHelpers = "\n        " . $currentHelpers . ",\n        '{$helperName}',\n    ";
+            // Clean up any existing double commas or leading commas
+            $inner = preg_replace('/,\s*,+/', ',', $inner);
+            $inner = preg_replace('/^\s*,\s*/', '', $inner);
+
+            $normalizedHelper = str_replace('\\\\', '\\', $helperName);
+            $escapedHelper = str_replace('\\', '\\\\', $helperName);
+
+            $alreadyPresent = str_contains($inner, $normalizedHelper) || str_contains($inner, $escapedHelper);
+
+            if (!$alreadyPresent) {
+                $trimmed = rtrim($inner);
+                if ($trimmed === '') {
+                    $inner = "\n        '{$helperName}',\n    ";
+                } else {
+                    // Check if last code token ends with comma (excluding trailing comments)
+                    $codeOnly = preg_replace('/(?:\/\/|#)[^\r\n]*$/', '', $trimmed);
+                    $codeOnly = preg_replace('/\/\*.*?\*\/\s*$/s', '', $codeOnly);
+                    $codeOnly = rtrim($codeOnly);
+
+                    if (str_ends_with($codeOnly, ',')) {
+                        $inner = $trimmed . "\n        '{$helperName}',\n    ";
+                    } else {
+                        // If line ends with a comment, place comma before the comment
+                        if (preg_match('/^(.*?)(\s*(?:\/\/|#)[^\r\n]*)$/', $trimmed, $m)) {
+                            $inner = $m[1] . ",\n        '{$helperName}',\n    " . $m[2];
+                        } else {
+                            $inner = $trimmed . ",\n        '{$helperName}',\n    ";
+                        }
+                    }
+                }
             }
-            $content = str_replace($matches[0], $matches[1] . $newHelpers . $matches[3], $content);
 
-            // Clean up any accidental double commas in $helpers array
-            $content = preg_replace_callback('/(public\s+\$helpers\s*=\s*\[)(.*?)(\];)/s', function ($m) {
-                $sanitized = preg_replace('/,(\s*,)+/', ',', $m[2]);
-                return $m[1] . $sanitized . $m[3];
-            }, $content);
+            // Final safety cleanup of any duplicate commas in helpers block
+            $inner = preg_replace('/,\s*,+/', ',', $inner);
 
-            file_put_contents($path, $content);
+            $newContent = str_replace($matches[0], $prefix . $inner . $suffix, $content);
+            if ($newContent !== $content) {
+                file_put_contents($path, $newContent);
+            }
         } else {
             CLI::error('Failed to register helper.');
         }
