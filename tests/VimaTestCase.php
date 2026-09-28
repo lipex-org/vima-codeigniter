@@ -24,6 +24,7 @@ abstract class VimaTestCase extends CIUnitTestCase
         VimaRegistrar::init(true);
 
         // Clear cache and context
+        \Vima\Core\Cache\Services\CacheVersionManager::clearL1();
         if (function_exists('vima')) {
             resolve(CacheInterface::class)->clear();
         }

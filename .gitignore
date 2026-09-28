@@ -6,3 +6,4 @@ phpunit.xml
 .env
 verify_config.php
 .vscode
+composer.lock

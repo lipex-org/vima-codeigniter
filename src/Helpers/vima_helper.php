@@ -149,3 +149,54 @@ if (!function_exists('vima_policy')) {
         $registry->register($action, $callback);
     }
 }
+
+if (!function_exists('can_matrix')) {
+    /**
+     * Return a flat dictionary of permission names to boolean values for the current user.
+     * Perfect for Inertia / frontend authorization props.
+     *
+     * @param string[] $filter Optional list of permissions to evaluate. If empty, evaluates all system permissions.
+     * @param array $context Contextual evaluation parameters.
+     * @return array<string, bool>
+     */
+    function can_matrix(array $filter = [], array $context = []): array
+    {
+        $user = null;
+        $config = config('Vima');
+
+        if ($config) {
+            $user = $config->getCurrentUser();
+        } else {
+            try {
+                if (function_exists('auth')) {
+                    $user = auth()->user();
+                } else {
+                    $user = service('auth')->user();
+                }
+            } catch (\Throwable $e) {
+                $user = null;
+            }
+        }
+
+        if (!$user) {
+            return [];
+        }
+
+        return vima()->matrix($user, $filter, $context);
+    }
+}
+
+if (!function_exists('vima_matrix')) {
+    /**
+     * Return a flat dictionary of permission names to boolean values for a given user.
+     *
+     * @param object $user
+     * @param string[] $filter
+     * @param array $context
+     * @return array<string, bool>
+     */
+    function vima_matrix(object $user, array $filter = [], array $context = []): array
+    {
+        return vima()->matrix($user, $filter, $context);
+    }
+}

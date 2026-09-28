@@ -6,6 +6,7 @@ use Vima\CodeIgniter\Support\VimaRegistrar;
 use Vima\Core\Audit\Services\AuditService;
 use Vima\Core\Events\Access\AuthorizationChecked;
 use Vima\Core\Events\Sync\SyncFinished;
+use Vima\Core\Cache\Services\CacheVersionManager;
 use function Vima\Core\resolve;
 
 Events::on('pre_system', static function () {
@@ -31,25 +32,31 @@ Events::on(AuthorizationChecked::NAME, static function ($event) {
 Events::on('vima.event', static function ($event) {
     $name = method_exists($event, 'getName') ? $event->getName() : get_class($event);
 
+    /** @var CacheVersionManager $versionManager */
+    $versionManager = resolve(CacheVersionManager::class);
+
+    $data = [];
+    if (method_exists($event, 'getData')) {
+        $data = $event->getData();
+    } elseif (method_exists($event, 'getParams')) {
+        $data = $event->getParams();
+    }
+
     if (str_starts_with($name, 'vima.user.')) {
-        $cache = Services::vima_cache(true);
-        $config = Services::vima_config(true);
-
-        $data = [];
-        if (method_exists($event, 'getData')) {
-            $data = $event->getData();
-        } elseif (method_exists($event, 'getParams')) {
-            $data = $event->getParams();
-        }
-
         $userId = $data['userId'] ?? null;
         if ($userId !== null) {
-            $prefix = rtrim($config->cachePrefix, '_:') ?: 'vima';
-            $cache->delete($prefix . '_user_' . $userId . '_roles');
-            $cache->delete($prefix . '_user_' . $userId . '_permissions');
+            $versionManager->bumpUserEpoch($userId);
         }
+    } elseif (str_starts_with($name, 'vima.role.')) {
+        $roleId = $data['roleId'] ?? ($data['role']->id ?? null);
+        if ($roleId !== null) {
+            $versionManager->bumpRoleEpoch($roleId);
+        } else {
+            $versionManager->bumpGlobalEpoch();
+        }
+    } elseif (str_starts_with($name, 'vima.permission.')) {
+        $versionManager->bumpGlobalEpoch();
     } elseif ($name === SyncFinished::class || str_contains($name, 'SyncFinished')) {
-        $cache = Services::vima_cache(true);
-        $cache->clear();
+        $versionManager->bumpGlobalEpoch();
     }
 });
