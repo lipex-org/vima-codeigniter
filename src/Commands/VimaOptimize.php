@@ -43,7 +43,18 @@ class VimaOptimize extends BaseCommand
      *
      * @var string
      */
-    protected $usage = 'vima:optimize';
+    protected $usage = 'vima:optimize [options]';
+
+    /**
+     * The Command's Options
+     *
+     * @var array
+     */
+    protected $options = [
+        '--users'   => 'Comma-separated user IDs to pre-warm matrices for (e.g. --users=1,2,5)',
+        '--filter'  => 'Comma-separated permission names to filter matrix compilation (e.g. --filter=posts.create,posts.edit)',
+        '--no-clear'=> 'Do not clear caches before optimizing',
+    ];
 
     /**
      * Actually execute a command.
@@ -52,14 +63,31 @@ class VimaOptimize extends BaseCommand
      */
     public function run(array $params)
     {
-        CLI::write('Warming up Vima caches...', 'yellow');
+        CLI::write('⚡ Warming up Vima caches...', 'yellow');
 
         try {
-            $stats = service('vima_deployment')->optimize();
+            $usersInput = CLI::getOption('users') ?? $params['users'] ?? null;
+            $filterInput = CLI::getOption('filter') ?? $params['filter'] ?? null;
 
-            CLI::write('Optimization complete!', 'green');
-            CLI::write("  - Cached {$stats['roles']} roles.");
-            CLI::write("  - Cached {$stats['policies']} policy maps.");
+            $users = [];
+            if (!empty($usersInput)) {
+                $users = array_map('trim', explode(',', (string) $usersInput));
+            }
+
+            $matrixFilter = [];
+            if (!empty($filterInput)) {
+                $matrixFilter = array_map('trim', explode(',', (string) $filterInput));
+            }
+
+            $stats = service('vima_deployment')->optimize($users, $matrixFilter);
+
+            CLI::write('✔ Optimization complete!', 'green');
+            CLI::write("  • Cached {$stats['permissions']} system permissions.");
+            CLI::write("  • Pre-compiled {$stats['roles']} role hierarchies & permission trees.");
+            CLI::write("  • Pre-compiled {$stats['policies']} policy attribute maps.");
+            if (!empty($stats['users'])) {
+                CLI::write("  • Pre-compiled matrices for {$stats['users']} active users.", 'cyan');
+            }
 
         } catch (\Throwable $e) {
             CLI::error('Optimization failed: ' . $e->getMessage());
